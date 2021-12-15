@@ -16,7 +16,7 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package collector
+package handler
 
 import (
 	"strings"
@@ -30,6 +30,7 @@ import (
 	"github.com/nging-plugins/collector/pkg/dbschema"
 	"github.com/nging-plugins/collector/pkg/library/collector/export"
 	"github.com/nging-plugins/collector/pkg/model"
+	dbmgrmodel "github.com/nging-plugins/dbmanager/pkg/model"
 )
 
 var destTypeInputField = map[string]string{
@@ -128,7 +129,7 @@ func setDest(ctx echo.Context, m *dbschema.NgingCollectorExport) error {
 }
 
 func setExportFormData(ctx echo.Context) {
-	dbaM := model.NewDbAccount(ctx)
+	dbaM := dbmgrmodel.NewDbAccount(ctx)
 	cond := []db.Compound{db.Cond{`engine`: `mysql`}}
 	dbaM.ListByOffset(nil, nil, 0, -1, db.And(cond...))
 	dbAccountList := dbaM.Objects()

@@ -36,6 +36,7 @@ import (
 	"github.com/nging-plugins/collector/pkg/dbschema"
 	"github.com/nging-plugins/collector/pkg/library/collector/exec"
 	"github.com/nging-plugins/collector/pkg/library/collector/sender"
+	dbmgrdbschema "github.com/nging-plugins/dbmanager/pkg/dbschema"
 )
 
 var emptyPipeItem = &gopiper.PipeItem{}
@@ -63,7 +64,7 @@ func (m *Mappings) Export2DB(result *exec.Recv, data echo.Store, config *dbschem
 		err error
 	)
 	if config.DestType == `dbAccountID` {
-		accountM := dbschema.NewNgingDbAccount(config.Context())
+		accountM := dbmgrdbschema.NewNgingDbAccount(config.Context())
 		err = accountM.Get(nil, db.Cond{`id`: config.Dest})
 		if err != nil {
 			return err
