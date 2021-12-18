@@ -11,7 +11,6 @@ import (
 const ID = `collector`
 
 var Module = module.Module{
-	Startup: ID,
 	TemplatePath: map[string]string{
 		ID: `collector/template/backend`,
 	},
