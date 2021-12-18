@@ -26,4 +26,5 @@ var Module = module.Module{
 			Description:  `网页采集`,
 		},
 	},
+	DBSchemaVer: 0.0000,
 }
