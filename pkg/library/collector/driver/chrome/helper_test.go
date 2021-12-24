@@ -21,7 +21,7 @@ package chrome
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -56,13 +56,13 @@ func getServiceList(res *string, pageURL string) chromedp.Tasks {
 		chromedp.SendKeys("#commentform input[name=imgcode]", "12345", chromedp.ByQuery),
 		chromedp.Screenshot(`#commentform`, &buf, chromedp.ByQuery),
 		chromedp.ActionFunc(func(context.Context) error {
-			return ioutil.WriteFile("testimonials-submit-comment-before.png", buf, 0644)
+			return os.WriteFile("testimonials-submit-comment-before.png", buf, 0644)
 		}),
 		// chromedp.Submit("#commentform", chromedp.ByQuery),
 		// chromedp.Sleep(2 * time.Second),
 		// chromedp.Screenshot(`content`, &buf, chromedp.ByID),
 		// chromedp.ActionFunc(func(context.Context, cdp.Executor) error {
-		// 	return ioutil.WriteFile("testimonials-submit-comment-after.png", buf, 0644)
+		// 	return os.WriteFile("testimonials-submit-comment-after.png", buf, 0644)
 		// }),
 		// 访问服务列表
 		chromedp.Navigate(pageURL),
@@ -76,7 +76,7 @@ func getServiceList(res *string, pageURL string) chromedp.Tasks {
 		chromedp.OuterHTML("#content .post h2", res, chromedp.ByQuery),
 		chromedp.Screenshot(`#content`, &buf, chromedp.ByID),
 		chromedp.ActionFunc(func(context.Context) error {
-			return ioutil.WriteFile("testimonials.png", buf, 0644)
+			return os.WriteFile("testimonials.png", buf, 0644)
 		}),
 	}
 }
