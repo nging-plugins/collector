@@ -19,7 +19,7 @@ require (
 	github.com/admpub/regexp2 v1.1.7
 	github.com/chromedp/cdproto v0.0.0-20211205231339-d2673e93eee4
 	github.com/chromedp/chromedp v0.7.6
-	github.com/nging-plugins/dbmanager v0.0.1
+	github.com/nging-plugins/dbmanager v0.0.2
 	github.com/stretchr/testify v1.7.0
 	github.com/tebeka/selenium v0.9.9
 	github.com/webx-top/com v0.3.5
