@@ -19,12 +19,12 @@ require (
 	github.com/admpub/regexp2 v1.1.7
 	github.com/chromedp/cdproto v0.0.0-20220117091653-dcaca7efe124
 	github.com/chromedp/chromedp v0.7.6
-	github.com/nging-plugins/dbmanager v0.1.0
+	github.com/nging-plugins/dbmanager v0.1.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tebeka/selenium v0.9.9
 	github.com/webx-top/com v0.3.6
 	github.com/webx-top/db v1.20.5
-	github.com/webx-top/echo v2.24.0+incompatible
+	github.com/webx-top/echo v2.24.1+incompatible
 )
 
 require (
@@ -108,6 +108,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
+	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.14.1 // indirect
@@ -148,7 +149,7 @@ require (
 	github.com/volatiletech/strmangle v0.0.1 // indirect
 	github.com/webx-top/captcha v0.0.1 // indirect
 	github.com/webx-top/chardet v0.0.1 // indirect
-	github.com/webx-top/client v0.5.0 // indirect
+	github.com/webx-top/client v0.6.6 // indirect
 	github.com/webx-top/codec v0.1.1 // indirect
 	github.com/webx-top/image v0.0.9 // indirect
 	github.com/webx-top/pagination v0.1.1 // indirect
