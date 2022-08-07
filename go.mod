@@ -17,9 +17,9 @@ require (
 	github.com/admpub/nging/v4 v4.1.1
 	github.com/admpub/phantomjs v0.0.0-20180924162111-8a5af756140e
 	github.com/admpub/regexp2 v1.1.7
-	github.com/chromedp/cdproto v0.0.0-20220801115359-6a862c1fb810
+	github.com/chromedp/cdproto v0.0.0-20220804213442-94946ca6fcf8
 	github.com/chromedp/chromedp v0.8.3
-	github.com/nging-plugins/dbmanager v0.5.0
+	github.com/nging-plugins/dbmanager v0.5.1
 	github.com/stretchr/testify v1.8.0
 	github.com/tebeka/selenium v0.9.9
 	github.com/webx-top/com v0.6.0
@@ -129,11 +129,11 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
-	github.com/prometheus/client_golang v1.12.2 // indirect
+	github.com/prometheus/client_golang v1.13.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/rivo/uniseg v0.3.1 // indirect
+	github.com/rivo/uniseg v0.3.4 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd // indirect
 	github.com/shirou/gopsutil/v3 v3.22.7 // indirect
@@ -160,9 +160,9 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/image v0.0.0-20220722155232-062f8c9fd539 // indirect
-	golang.org/x/net v0.0.0-20220802222814-0bcc04d9c69b // indirect
+	golang.org/x/net v0.0.0-20220805013720-a33c5aa5df48 // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.0.0-20220803195053-6e608f9ce704 // indirect
+	golang.org/x/sys v0.0.0-20220804214406-8e32c043e418 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
