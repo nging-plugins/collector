@@ -12,19 +12,19 @@ require (
 	github.com/admpub/go-download/v2 v2.1.12
 	github.com/admpub/go-phantomjs-fetcher v0.0.0-20180924162325-bb2ae1648e33
 	github.com/admpub/gopiper v1.0.2
-	github.com/admpub/log v1.3.3
+	github.com/admpub/log v1.3.4
 	github.com/admpub/marmot v0.0.0-20200702042226-2170d9ff59f5
 	github.com/admpub/nging/v5 v5.0.0
 	github.com/admpub/phantomjs v0.0.0-20180924162111-8a5af756140e
 	github.com/admpub/regexp2 v1.1.7
-	github.com/chromedp/cdproto v0.0.0-20230524011726-8501c74e8228
+	github.com/chromedp/cdproto v0.0.0-20230625224106-7fafe342e117
 	github.com/chromedp/chromedp v0.9.1
-	github.com/nging-plugins/dbmanager v1.3.1
-	github.com/stretchr/testify v1.8.3
+	github.com/nging-plugins/dbmanager v1.3.13
+	github.com/stretchr/testify v1.8.4
 	github.com/tebeka/selenium v0.9.9
-	github.com/webx-top/com v0.9.4
-	github.com/webx-top/db v1.23.17
-	github.com/webx-top/echo v2.35.2+incompatible
+	github.com/webx-top/com v0.9.5
+	github.com/webx-top/db v1.24.3
+	github.com/webx-top/echo v2.36.2+incompatible
 )
 
 require (
@@ -78,9 +78,8 @@ require (
 	github.com/axgle/mahonia v0.0.0-20180208002826-3358181d7394 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bitly/go-simplejson v0.5.0 // indirect
+	github.com/bitly/go-simplejson v0.5.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/coscms/forms v1.12.1 // indirect
@@ -98,7 +97,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.14.0 // indirect
+	github.com/go-playground/validator/v10 v10.14.1 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
@@ -114,7 +113,7 @@ require (
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.16.5 // indirect
+	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20230326075908-cb1d2100619a // indirect
@@ -134,29 +133,29 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect
-	github.com/prometheus/client_golang v1.15.1 // indirect
+	github.com/prometheus/client_golang v1.16.0 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
-	github.com/prometheus/procfs v0.10.0 // indirect
+	github.com/prometheus/procfs v0.11.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
-	github.com/shirou/gopsutil/v3 v3.23.4 // indirect
+	github.com/shirou/gopsutil/v3 v3.23.6 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
-	github.com/tklauser/numcpus v0.6.0 // indirect
+	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/volatiletech/inflect v0.0.1 // indirect
-	github.com/volatiletech/strmangle v0.0.4 // indirect
+	github.com/volatiletech/strmangle v0.0.5 // indirect
 	github.com/webx-top/captcha v0.1.0 // indirect
 	github.com/webx-top/chardet v0.0.1 // indirect
 	github.com/webx-top/client v0.8.9 // indirect
 	github.com/webx-top/codec v0.3.0 // indirect
 	github.com/webx-top/image v0.1.0 // indirect
-	github.com/webx-top/pagination v0.2.1 // indirect
+	github.com/webx-top/pagination v0.2.3 // indirect
 	github.com/webx-top/poolx v0.0.0-20210912044716-5cfa2d58e380 // indirect
 	github.com/webx-top/restyclient v0.0.4 // indirect
 	github.com/webx-top/tagfast v0.0.0-20161020041435-9a2065ce3dd2 // indirect
@@ -164,14 +163,14 @@ require (
 	github.com/webx-top/validator v0.2.0 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
-	golang.org/x/image v0.7.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/crypto v0.11.0 // indirect
+	golang.org/x/image v0.9.0 // indirect
+	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
