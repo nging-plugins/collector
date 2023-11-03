@@ -103,7 +103,7 @@ func (c *Rules) Collect(debug bool, noticeSender sender.Notice, progress *notice
 	c.Rule.isExited = c.isExited
 	// 	err = browser.Close()
 	//入口页面
-	c.Rule.result = &Recv{
+	parentResult := &Recv{
 		Index:      -1,
 		LevelIndex: -1, //子页面层级计数，用来遍历c.Extra中的元素(作为Extra切片下标)，-1表示入口页面
 		//rule:       c.Rule,
@@ -116,6 +116,7 @@ func (c *Rules) Collect(debug bool, noticeSender sender.Notice, progress *notice
 	return c.Rule.Collect(
 		uint64(c.NgingCollectorPage.ParentId),
 		``,
+		parentResult,
 		fetch,
 		c.Extra,
 		noticeSender,
