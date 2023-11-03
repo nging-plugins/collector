@@ -68,7 +68,6 @@ type Rule struct {
 	exportFn                     func(pageID uint, result *Recv, collected echo.Store, noticeSender sender.Notice) error
 	isExited                     func() bool
 	result                       *Recv // 接收到的采集结果
-	pagesResult                  map[uint]map[int]*Recv
 }
 
 func (c *Rule) IsExited() bool {
@@ -93,11 +92,10 @@ func (c *Rule) ParseTmplContent(pageIndex int, tmplContent string) (string, erro
 		err = fmt.Errorf(`failed to parse(#%d): %w`, pageIndex, echo.ParseTemplateError(err, tmplContent))
 		return ``, echo.NewPanicError(nil, err)
 	}
+	common.WriteCache(`collector-debug`, param.AsString(c.Id)+`.json`, com.Str2bytes(c.result.String()))
 	buf := bytes.NewBuffer(nil)
 	err = t.Execute(buf, c.result)
 	if err != nil {
-		common.WriteCache(`collector-debug`, param.AsString(c.Id)+`-map.json`, com.Str2bytes(com.Dump(c.pagesResult, false)))
-		common.WriteCache(`collector-debug`, param.AsString(c.Id)+`.json`, com.Str2bytes(c.result.String()))
 		err = fmt.Errorf(`failed to execute(#%d): %w`, pageIndex, errors.Join(
 			echo.ParseTemplateError(err, tmplContent),
 			fmt.Errorf(`parent data: %s`, c.result.Parent()),
@@ -113,9 +111,6 @@ func (c *Rule) Collect(parentID uint64, parentURL string,
 	progress *notice.Progress) ([]Result, error) {
 	if c.IsExited() {
 		return nil, ErrForcedExit
-	}
-	if _, ok := c.pagesResult[c.Id]; !ok {
-		c.pagesResult[c.Id] = map[int]*Recv{}
 	}
 	levelIndex := c.result.LevelIndex + 1
 	enterURL, err := c.ParseTmplContent(levelIndex, c.NgingCollectorPage.EnterUrl)
@@ -178,7 +173,7 @@ func (c *Rule) Collect(parentID uint64, parentURL string,
 		if len(urlResult) > 0 {
 			result = append(result, urlResult...)
 		}
-		if collection != nil && c.NgingCollectorPage.HasChild == `N` { //这是最底层
+		if collection != nil && c.NgingCollectorPage.HasChild == common.BoolN { //这是最底层
 			if c.exportFn != nil {
 				switch collected := collection.(type) {
 				case map[string]interface{}:
@@ -224,10 +219,6 @@ func (c *Rule) CollectOne(levelIndex int, urlIndex int,
 			}
 		}()
 	}
-	// if _, ok := c.pagesResult[c.Id][urlIndex]; ok {
-	// 	ignore = true
-	// 	return
-	// }
 	if len(parentURL) > 0 {
 		pageURL = com.AbsURL(parentURL, pageURL)
 	}
@@ -363,7 +354,6 @@ func (c *Rule) CollectOne(levelIndex int, urlIndex int,
 	if err != nil {
 		return
 	}
-	c.pagesResult[c.Id][urlIndex] = c.result
 	//historyMdl.Data = string(encoded)
 	err = common.WriteCache(`colloctor`, urlMD5+`.json`, encoded)
 	if err != nil {
@@ -407,6 +397,7 @@ func (c *Rule) collectExtra(levelIndex int, urlIndex int, parentURL string,
 	if len(extra) <= levelIndex {
 		return
 	}
+	lastRuleForm := c
 	for index, pageRuleForm := range extra[levelIndex:] {
 		if c.IsExited() {
 			err = ErrForcedExit
@@ -414,13 +405,12 @@ func (c *Rule) collectExtra(levelIndex int, urlIndex int, parentURL string,
 		}
 		pageRuleFormCopy := *pageRuleForm
 		pageRuleFormCopy.result = &Recv{
-			Index:       index,
-			LevelIndex:  levelIndex,
-			URLIndex:    urlIndex,
-			rule:        &pageRuleFormCopy,
-			pagesResult: c.pagesResult,
+			Index:      index,
+			LevelIndex: levelIndex,
+			URLIndex:   urlIndex,
+			rule:       &pageRuleFormCopy,
+			parent:     lastRuleForm.result,
 		}
-		pageRuleFormCopy.pagesResult = c.pagesResult
 		pageRuleFormCopy.debug = c.debug
 		pageRuleFormCopy.exportFn = c.exportFn
 		pageRuleFormCopy.isExited = c.isExited
@@ -428,18 +418,24 @@ func (c *Rule) collectExtra(levelIndex int, urlIndex int, parentURL string,
 			pageRuleFormCopy.NgingCollectorPage.Charset = c.NgingCollectorPage.Charset
 		}
 		var extraResult []Result
-		extraResult, err = pageRuleFormCopy.Collect(
-			historyID,
-			parentURL,
-			fetch,
-			extra,
-			noticeSender,
-			progress,
-		)
+		if pageRuleFormCopy.HasChild == common.BoolN {
+			extraResult, err = pageRuleFormCopy.Collect(
+				historyID, parentURL, fetch,
+				nil,
+				noticeSender, progress,
+			)
+		} else {
+			extraResult, err = pageRuleFormCopy.Collect(
+				historyID, parentURL, fetch,
+				extra,
+				noticeSender, progress,
+			)
+		}
 		if err != nil {
 			return
 		}
 		result = append(result, extraResult...)
+		lastRuleForm = pageRuleForm
 	}
 	return
 }

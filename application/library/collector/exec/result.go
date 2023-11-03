@@ -60,15 +60,15 @@ type (
 		Elapsed   time.Duration
 	}
 	Recv struct { //接收结果
-		Index       int
-		IsEmpty     bool        //是否为空结果
-		LevelIndex  int         //层级索引
-		URLIndex    int         //网址列表索引
-		Result      interface{} //采集结果数据
-		rule        *Rule       //页面规则
-		Title       string      //页面标题
-		URL         string      //网址
-		pagesResult map[uint]map[int]*Recv
+		Index      int
+		IsEmpty    bool        //是否为空结果
+		LevelIndex int         //层级索引
+		URLIndex   int         //网址列表索引
+		Result     interface{} //采集结果数据
+		rule       *Rule       //页面规则
+		Title      string      //页面标题
+		URL        string      //网址
+		parent     *Recv
 	}
 )
 
@@ -122,15 +122,10 @@ func (c *Recv) ParentsItem(lasts ...int) interface{} {
 }
 
 func (c *Recv) Parent() *Recv {
-	parentPage, ok := c.pagesResult[c.rule.ParentId]
-	if !ok {
-		return emptyRecv
+	if c.parent != nil {
+		return c.parent
 	}
-	parentResult, ok := parentPage[c.URLIndex]
-	if !ok {
-		return emptyRecv
-	}
-	return parentResult
+	return emptyRecv
 }
 
 func (c *Recv) Parents(lasts ...int) *Recv {
@@ -138,21 +133,15 @@ func (c *Recv) Parents(lasts ...int) *Recv {
 	if len(lasts) > 0 {
 		last = lasts[0]
 	}
-	if last <= 0 {
+	if last < 1 {
 		return c
 	}
 	r := c
-	parentID := c.rule.ParentId
 	for i := 1; i <= last; i++ {
-		parentPage, ok := c.pagesResult[parentID]
-		if !ok {
+		if r.parent == nil {
 			return emptyRecv
 		}
-		r, ok = parentPage[c.URLIndex]
-		if !ok {
-			return emptyRecv
-		}
-		parentID = r.rule.ParentId
+		r = r.parent
 	}
 	if r == nil {
 		return emptyRecv
