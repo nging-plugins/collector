@@ -101,6 +101,17 @@ func (c *Rule) ParseTmplContent(tmplContent string, result *Recv) (string, error
 	return strings.TrimSpace(buf.String()), err
 }
 
+func fomartGoData(data interface{}) string {
+	return ppnocolor.Sprint(data)
+}
+
+func (c *Rule) recordDebugFile(recv *Recv) {
+	if !c.debug {
+		return
+	}
+	common.WriteCache(`collector-debug`, `enterUrl-`+fmt.Sprintf(`%d_%d_%d_%d`, c.RootId, recv.LevelIndex, recv.URLIndex, recv.Index)+`.json`, com.Str2bytes(fomartGoData(recv)))
+}
+
 func (c *Rule) Collect(parentID uint64, parentURL string, recv *Recv,
 	fetch Fether, extra []*Rule,
 	noticeSender sender.Notice,
@@ -110,7 +121,7 @@ func (c *Rule) Collect(parentID uint64, parentURL string, recv *Recv,
 	}
 	recv.LevelIndex++
 	enterURL, err := c.ParseTmplContent(c.NgingCollectorPage.EnterUrl, recv)
-	common.WriteCache(`collector-debug`, `enterUrl-`+fmt.Sprintf(`%d_%d_%d`, recv.LevelIndex, recv.URLIndex, recv.Index)+`.json`, com.Str2bytes(ppnocolor.Sprint(recv)))
+	c.recordDebugFile(recv)
 	if err != nil {
 		return nil, err
 	}

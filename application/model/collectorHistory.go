@@ -19,6 +19,7 @@
 package model
 
 import (
+	"github.com/admpub/log"
 	"github.com/webx-top/db"
 	"github.com/webx-top/echo"
 
@@ -59,9 +60,26 @@ func (this *CollectorHistory) Delete(mw func(db.Result) db.Result, args ...inter
 	if err != nil {
 		return err
 	}
-	err = common.RemoveCache(`colloctor`, this.UrlMd5+`.json`)
+	return this.delete(this.NgingCollectorHistory)
+}
+
+func (this *CollectorHistory) delete(row *dbschema.NgingCollectorHistory) error {
+	err := common.RemoveCache(`colloctor`, row.UrlMd5+`.json`)
+	if err != nil {
+		log.Error(err)
+	}
+	original := row
+	ol := common.NewOffsetLister(this, nil, nil, `parent_id`, this.Id)
+	err = ol.ChunkList(func() error {
+		for _, _row := range this.Objects() {
+			_row.CPAFrom(original)
+			this.NgingCollectorHistory = _row
+			return this.delete(_row)
+		}
+		return nil
+	}, 100, 0)
 	if err != nil {
 		return err
 	}
-	return this.NgingCollectorHistory.Delete(mw, args...)
+	return row.Delete(nil, `id`, row.Id)
 }
