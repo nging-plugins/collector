@@ -75,10 +75,10 @@ func RuleAdd(c echo.Context) error {
 	if c.IsPost() {
 		result := c.Data()
 		err = c.MustBind(pageM.NgingCollectorPage, func(key string, values []string) (string, []string) {
-			if strings.HasPrefix(key, `rule.`) {
+			if strings.HasPrefix(key, `Rule.`) {
 				return ``, nil
 			}
-			if strings.HasPrefix(key, `extra.`) {
+			if strings.HasPrefix(key, `Extra.`) {
 				return ``, nil
 			}
 			return key, values
@@ -205,10 +205,10 @@ func RuleEdit(c echo.Context) error {
 			return c.JSON(result.SetError(err))
 		}
 		err = c.MustBind(pageM.NgingCollectorPage, func(key string, values []string) (string, []string) {
-			if strings.HasPrefix(key, `rule.`) {
+			if strings.HasPrefix(key, `Rule.`) {
 				return ``, nil
 			}
-			if strings.HasPrefix(key, `extra.`) {
+			if strings.HasPrefix(key, `Extra.`) {
 				return ``, nil
 			}
 			return key, values
