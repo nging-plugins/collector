@@ -68,18 +68,19 @@ func (this *CollectorHistory) delete(row *dbschema.NgingCollectorHistory) error 
 	if err != nil {
 		log.Error(err)
 	}
-	original := row
-	ol := common.NewOffsetLister(this, nil, nil, `parent_id`, this.Id)
-	err = ol.ChunkList(func() error {
-		for _, _row := range this.Objects() {
-			_row.CPAFrom(original)
-			this.NgingCollectorHistory = _row
-			return this.delete(_row)
+	if row.HasChild == common.BoolY {
+		original := row
+		ol := common.NewOffsetLister(original, nil, nil, `parent_id`, original.Id)
+		err = ol.ChunkList(func() error {
+			for _, _row := range original.Objects() {
+				_row.CPAFrom(original)
+				return this.delete(_row)
+			}
+			return nil
+		}, 100, 0)
+		if err != nil {
+			return err
 		}
-		return nil
-	}, 100, 0)
-	if err != nil {
-		return err
 	}
 	return row.Delete(nil, `id`, row.Id)
 }
