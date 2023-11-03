@@ -89,11 +89,9 @@ func (c *Rule) ParseTmplContent(tmplContent string, result *Recv) (string, error
 		err = fmt.Errorf(`failed to parse(#%d): %w`, result.LevelIndex, echo.ParseTemplateError(err, tmplContent))
 		return ``, echo.NewPanicError(nil, err)
 	}
-	common.WriteCache(`collector-debug`, param.AsString(c.Id)+`.json`, com.Str2bytes(result.String()))
 	buf := bytes.NewBuffer(nil)
 	err = t.Execute(buf, result)
 	if err != nil {
-		common.WriteCache(`collector-debug`, `err.json`, com.Str2bytes(ppnocolor.Sprint(result)))
 		err = fmt.Errorf(`failed to execute(#%d): %w`, result.LevelIndex, errors.Join(
 			echo.ParseTemplateError(err, tmplContent),
 			fmt.Errorf(`parent data: %s`, result.Parent()),
@@ -112,6 +110,7 @@ func (c *Rule) Collect(parentID uint64, parentURL string, parentResult *Recv,
 	}
 	parentResult.LevelIndex++
 	enterURL, err := c.ParseTmplContent(c.NgingCollectorPage.EnterUrl, parentResult)
+	common.WriteCache(`collector-debug`, `enterUrl-`+param.AsString(parentResult.LevelIndex)+`.json`, com.Str2bytes(ppnocolor.Sprint(parentResult)))
 	if err != nil {
 		return nil, err
 	}
