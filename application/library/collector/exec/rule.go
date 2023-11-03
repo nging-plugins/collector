@@ -37,6 +37,7 @@ import (
 	download "github.com/admpub/go-download/v2"
 	"github.com/admpub/gopiper"
 	"github.com/admpub/log"
+	"github.com/admpub/pp/ppnocolor"
 	"github.com/webx-top/com"
 	"github.com/webx-top/db"
 	"github.com/webx-top/echo"
@@ -96,6 +97,7 @@ func (c *Rule) ParseTmplContent(pageIndex int, tmplContent string) (string, erro
 	buf := bytes.NewBuffer(nil)
 	err = t.Execute(buf, c.result)
 	if err != nil {
+		common.WriteCache(`collector-debug`, `err.json`, com.Str2bytes(ppnocolor.Sprint(c.result)))
 		err = fmt.Errorf(`failed to execute(#%d): %w`, pageIndex, errors.Join(
 			echo.ParseTemplateError(err, tmplContent),
 			fmt.Errorf(`parent data: %s`, c.result.Parent()),
@@ -397,7 +399,7 @@ func (c *Rule) collectExtra(levelIndex int, urlIndex int, parentURL string,
 	if len(extra) <= levelIndex {
 		return
 	}
-	lastRuleForm := c
+	lastRuleForm := *c
 	for index, pageRuleForm := range extra[levelIndex:] {
 		if c.IsExited() {
 			err = ErrForcedExit
@@ -408,8 +410,8 @@ func (c *Rule) collectExtra(levelIndex int, urlIndex int, parentURL string,
 			Index:      index,
 			LevelIndex: levelIndex,
 			URLIndex:   urlIndex,
-			rule:       &pageRuleFormCopy,
-			parent:     lastRuleForm.result,
+			//rule:       &pageRuleFormCopy,
+			parent: lastRuleForm.result,
 		}
 		pageRuleFormCopy.debug = c.debug
 		pageRuleFormCopy.exportFn = c.exportFn
@@ -435,7 +437,7 @@ func (c *Rule) collectExtra(levelIndex int, urlIndex int, parentURL string,
 			return
 		}
 		result = append(result, extraResult...)
-		lastRuleForm = pageRuleForm
+		lastRuleForm = pageRuleFormCopy
 	}
 	return
 }

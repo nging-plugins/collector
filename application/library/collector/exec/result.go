@@ -65,10 +65,10 @@ type (
 		LevelIndex int         //层级索引
 		URLIndex   int         //网址列表索引
 		Result     interface{} //采集结果数据
-		rule       *Rule       //页面规则
-		Title      string      //页面标题
-		URL        string      //网址
-		parent     *Recv
+		//rule       *Rule       //页面规则
+		Title  string //页面标题
+		URL    string //网址
+		parent *Recv
 	}
 )
 
@@ -101,9 +101,9 @@ func (c *Recv) ResultByIndex(index int) interface{} {
 	return echo.H{}
 }
 
-func (c *Recv) Rule() *Rule {
-	return c.rule
-}
+// func (c *Recv) Rule() *Rule {
+// 	return c.rule
+// }
 
 func (c *Recv) ParentItem() interface{} {
 	return c.Parent().ResultByIndex(c.URLIndex)
