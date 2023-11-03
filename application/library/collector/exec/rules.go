@@ -106,9 +106,9 @@ func (c *Rules) Collect(debug bool, noticeSender sender.Notice, progress *notice
 	c.Rule.result = &Recv{
 		Index:      -1,
 		LevelIndex: -1, //子页面层级计数，用来遍历c.Extra中的元素(作为Extra切片下标)，-1表示入口页面
-		rule:       c.Rule,
-		Title:      ``,
-		URL:        ``,
+		//rule:       c.Rule,
+		Title: ``,
+		URL:   ``,
 	}
 	if noticeSender == nil {
 		noticeSender = sender.Default
