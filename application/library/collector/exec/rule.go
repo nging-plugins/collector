@@ -42,6 +42,7 @@ import (
 	"github.com/webx-top/echo"
 	"github.com/webx-top/echo/engine"
 	"github.com/webx-top/echo/middleware/tplfunc"
+	"github.com/webx-top/echo/param"
 
 	"github.com/admpub/nging/v5/application/library/charset"
 	"github.com/admpub/nging/v5/application/library/common"
@@ -67,6 +68,7 @@ type Rule struct {
 	exportFn                     func(pageID uint, result *Recv, collected echo.Store, noticeSender sender.Notice) error
 	isExited                     func() bool
 	result                       *Recv // 接收到的采集结果
+	pagesResult                  map[uint]map[int]*Recv
 }
 
 func (c *Rule) IsExited() bool {
@@ -94,6 +96,8 @@ func (c *Rule) ParseTmplContent(pageIndex int, tmplContent string) (string, erro
 	buf := bytes.NewBuffer(nil)
 	err = t.Execute(buf, c.result)
 	if err != nil {
+		common.WriteCache(`collector-debug`, param.AsString(c.Id)+`-map.json`, com.Str2bytes(com.Dump(c.pagesResult, false)))
+		common.WriteCache(`collector-debug`, param.AsString(c.Id)+`.json`, com.Str2bytes(c.result.String()))
 		err = fmt.Errorf(`failed to execute(#%d): %w`, pageIndex, errors.Join(
 			echo.ParseTemplateError(err, tmplContent),
 			fmt.Errorf(`parent data: %s`, c.result.Parent()),
@@ -110,7 +114,10 @@ func (c *Rule) Collect(parentID uint64, parentURL string,
 	if c.IsExited() {
 		return nil, ErrForcedExit
 	}
-	levelIndex := c.result.levelIndex + 1
+	if _, ok := c.pagesResult[c.Id]; !ok {
+		c.pagesResult[c.Id] = map[int]*Recv{}
+	}
+	levelIndex := c.result.LevelIndex + 1
 	enterURL, err := c.ParseTmplContent(levelIndex, c.NgingCollectorPage.EnterUrl)
 	if err != nil {
 		return nil, err
@@ -157,13 +164,17 @@ func (c *Rule) Collect(parentID uint64, parentURL string,
 		progress.Total = int64(len(urlList))
 	}
 	historyMdl := dbschema.NewNgingCollectorHistory(c.Context())
+
 	for urlIndex, pageURL := range urlList {
 		if c.IsExited() {
 			return result, ErrForcedExit
 		}
-		collection, urlResult, err := c.CollectOne(levelIndex, urlIndex, parentID, parentURL, pageURL, fetch, extra, noticeSender, progress, historyMdl)
+		collection, urlResult, ignore, err := c.CollectOne(levelIndex, urlIndex, parentID, parentURL, pageURL, fetch, extra, noticeSender, progress, historyMdl)
 		if err != nil {
 			return result, err
+		}
+		if ignore {
+			continue
 		}
 		if len(urlResult) > 0 {
 			result = append(result, urlResult...)
@@ -205,8 +216,11 @@ func (c *Rule) CollectOne(levelIndex int, urlIndex int,
 	parentID uint64, parentURL string, pageURL string,
 	fetch Fether, extra []*Rule,
 	noticeSender sender.Notice,
-	progress *notice.Progress, historyMdl *dbschema.NgingCollectorHistory) (collection interface{}, result []Result, err error) {
-
+	progress *notice.Progress, historyMdl *dbschema.NgingCollectorHistory) (collection interface{}, result []Result, ignore bool, err error) {
+	if _, ok := c.pagesResult[c.Id][urlIndex]; ok {
+		ignore = true
+		return
+	}
 	if len(parentURL) > 0 {
 		pageURL = com.AbsURL(parentURL, pageURL)
 	}
@@ -219,9 +233,9 @@ func (c *Rule) CollectOne(levelIndex int, urlIndex int,
 		ruleMd5    string
 		contentMd5 string
 	)
-	c.result.url = pageURL
+	c.result.URL = pageURL
 	// collection 的类型有两种可能：[]interface{} / map[string]interface{}
-	c.result.result = collection
+	c.result.Result = collection
 	if !c.debug { //非测试模式才保存到数据库
 		err = historyMdl.Get(nil, `url_md5`, urlMD5)
 		if err != nil {
@@ -231,6 +245,7 @@ func (c *Rule) CollectOne(levelIndex int, urlIndex int,
 			//不存在记录
 		} else if historyMdl.Id > 0 {
 			if c.NgingCollectorPage.DuplicateRule == `url` {
+				ignore = true
 				return
 			}
 			historyID = historyMdl.Id
@@ -241,6 +256,7 @@ func (c *Rule) CollectOne(levelIndex int, urlIndex int,
 		}
 		ruleMd5 = com.ByteMd5(encoded)
 		if historyID > 0 && historyMdl.RuleMd5 == ruleMd5 && c.NgingCollectorPage.DuplicateRule == `rule` { //规则没有更改过的情况下，如果已经采集过则跳过
+			ignore = true
 			return
 		}
 	}
@@ -260,6 +276,7 @@ func (c *Rule) CollectOne(levelIndex int, urlIndex int,
 	if !c.debug { //非测试模式才保存到数据库
 		contentMd5 = com.ByteMd5(content)
 		if historyID > 0 && historyMdl.Content == contentMd5 && c.NgingCollectorPage.DuplicateRule == `content` { //规则没有更改过的情况下，如果已经采集过则跳过
+			ignore = true
 			return
 		}
 		historyMdl.Reset()
@@ -286,26 +303,8 @@ func (c *Rule) CollectOne(levelIndex int, urlIndex int,
 			}
 		}
 	}
-	var pipe gopiper.PipeItem
-	pipe, err = c.makePipe(levelIndex, pageURL, fetch, noticeSender, progress)
-	if err != nil {
-		return
-	}
-	collection, err = pipe.PipeBytes(content, c.NgingCollectorPage.ContentType)
-	if err != nil {
-		if err != gopiper.ErrInvalidContent { //跳过无效内容
-			if sendErr := noticeSender(err.Error(), 0, progress); sendErr != nil {
-				err = sendErr
-				return
-			}
-		}
-		if c.debug {
-			return
-		}
-		err = nil
-		return
-	}
-	if collection == nil {
+	collection, err = c.execPipe(levelIndex, pageURL, content, fetch, noticeSender, progress)
+	if err != nil || collection == nil {
 		return
 	}
 
@@ -333,25 +332,31 @@ func (c *Rule) CollectOne(levelIndex int, urlIndex int,
 			}
 		}
 	}
-	c.result.title = pageTitle
-	c.result.result = collection
+	c.result.Title = pageTitle
+	c.result.Result = collection
 	// 记录第一个网址数据
 	if urlIndex == 0 {
 		endTime := time.Now()
-		result = append(result, Result{
+		r := Result{
 			Title:     pageTitle,
 			URL:       pageURL,
 			Result:    collection,
-			Type:      pipe.Type,
 			StartTime: startTime,
 			EndTime:   endTime,
 			Elapsed:   endTime.Sub(startTime),
-		})
+		}
+		if c.NgingCollectorPage.Type == `list` {
+			r.Type = `array`
+		} else {
+			r.Type = `map`
+		}
+		result = append(result, r)
 	}
 	encoded, err = com.JSONEncode(collection)
 	if err != nil {
 		return
 	}
+	c.pagesResult[c.Id][urlIndex] = c.result
 	//historyMdl.Data = string(encoded)
 	err = common.WriteCache(`colloctor`, urlMD5+`.json`, encoded)
 	if err != nil {
@@ -375,7 +380,7 @@ func (c *Rule) CollectOne(levelIndex int, urlIndex int,
 	//msgbox.Table(ctx.T(`Result`), collection, 200)
 	//color.Red(`(%d) `+pageURL, levelIndex)
 	var extraResult []Result
-	extraResult, err = c.collectExtra(levelIndex, urlIndex, pageURL, fetch, extra[levelIndex:], noticeSender, progress, historyID)
+	extraResult, err = c.collectExtra(levelIndex, urlIndex, pageURL, fetch, extra, noticeSender, progress, historyID)
 	if err != nil {
 		return
 	}
@@ -392,30 +397,32 @@ func (c *Rule) collectExtra(levelIndex int, urlIndex int, parentURL string,
 	if len(extra) <= levelIndex {
 		return
 	}
-	lastResult := c.result
-	for _, pageRuleForm := range extra[levelIndex:] {
+	for index, pageRuleForm := range extra[levelIndex:] {
 		if c.IsExited() {
 			err = ErrForcedExit
 			return
 		}
-		pageRuleForm.result = &Recv{
-			levelIndex: levelIndex,
-			urlIndex:   urlIndex,
-			rule:       pageRuleForm,
-			parent:     lastResult,
+		pageRuleFormCopy := *pageRuleForm
+		pageRuleFormCopy.result = &Recv{
+			Index:       index,
+			LevelIndex:  levelIndex,
+			URLIndex:    urlIndex,
+			rule:        &pageRuleFormCopy,
+			pagesResult: c.pagesResult,
 		}
-		pageRuleForm.debug = c.debug
-		pageRuleForm.exportFn = c.exportFn
-		pageRuleForm.isExited = c.isExited
-		if len(pageRuleForm.NgingCollectorPage.Charset) < 1 {
-			pageRuleForm.NgingCollectorPage.Charset = c.NgingCollectorPage.Charset
+		pageRuleFormCopy.pagesResult = c.pagesResult
+		pageRuleFormCopy.debug = c.debug
+		pageRuleFormCopy.exportFn = c.exportFn
+		pageRuleFormCopy.isExited = c.isExited
+		if len(pageRuleFormCopy.NgingCollectorPage.Charset) < 1 {
+			pageRuleFormCopy.NgingCollectorPage.Charset = c.NgingCollectorPage.Charset
 		}
 		var extraResult []Result
-		extraResult, err = pageRuleForm.Collect(
+		extraResult, err = pageRuleFormCopy.Collect(
 			historyID,
 			parentURL,
 			fetch,
-			nil,
+			extra,
 			noticeSender,
 			progress,
 		)
@@ -423,14 +430,13 @@ func (c *Rule) collectExtra(levelIndex int, urlIndex int, parentURL string,
 			return
 		}
 		result = append(result, extraResult...)
-		lastResult = pageRuleForm.result
 	}
 	return
 }
 
-func (c *Rule) makePipe(levelIndex int, pageURL string, fetch Fether,
+func (c *Rule) execPipe(levelIndex int, pageURL string, content []byte, fetch Fether,
 	noticeSender sender.Notice,
-	progress *notice.Progress) (pipe gopiper.PipeItem, err error) {
+	progress *notice.Progress) (collection interface{}, err error) {
 	subItems := []gopiper.PipeItem{}
 	for _, rule := range c.RuleList {
 		subItem := gopiper.PipeItem{
@@ -449,6 +455,7 @@ func (c *Rule) makePipe(levelIndex int, pageURL string, fetch Fether,
 		}
 		subItems = append(subItems, subItem)
 	}
+	var pipe gopiper.PipeItem
 	if c.NgingCollectorPage.Type == `list` {
 		child := gopiper.PipeItem{
 			Type:    `map`,
@@ -516,5 +523,19 @@ func (c *Rule) makePipe(levelIndex int, pageURL string, fetch Fether,
 		_, err = download.Download(fileURL, saveTo, nil)
 		return
 	})
+	collection, err = pipe.PipeBytes(content, c.NgingCollectorPage.ContentType)
+	if err != nil {
+		if err != gopiper.ErrInvalidContent { //跳过无效内容
+			if sendErr := noticeSender(err.Error(), 0, progress); sendErr != nil {
+				err = sendErr
+				return
+			}
+		}
+		if c.debug {
+			return
+		}
+		err = nil
+		return
+	}
 	return
 }

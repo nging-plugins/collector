@@ -101,13 +101,16 @@ func (c *Rules) Collect(debug bool, noticeSender sender.Notice, progress *notice
 	c.Rule.debug = debug
 	c.Rule.exportFn = c.exportFn
 	c.Rule.isExited = c.isExited
+	c.Rule.pagesResult = map[uint]map[int]*Recv{}
 	// 	err = browser.Close()
 	//入口页面
 	c.Rule.result = &Recv{
-		levelIndex: -1, //子页面层级计数，用来遍历c.Extra中的元素(作为Extra切片下标)，-1表示入口页面
-		rule:       c.Rule,
-		title:      ``,
-		url:        ``,
+		Index:       -1,
+		LevelIndex:  -1, //子页面层级计数，用来遍历c.Extra中的元素(作为Extra切片下标)，-1表示入口页面
+		rule:        c.Rule,
+		Title:       ``,
+		URL:         ``,
+		pagesResult: c.Rule.pagesResult,
 	}
 	if noticeSender == nil {
 		noticeSender = sender.Default

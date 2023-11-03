@@ -45,7 +45,7 @@ var (
 	//{(1-2,2-3:2)} 分为两个部分，用":"分隔，":"左边部分定义页码范围，右边定义步进
 	pagingFlagLeft  = "{("
 	pagingFlagRight = ")}"
-	emptyRecv       = &Recv{empty: true}
+	emptyRecv       = &Recv{IsEmpty: true}
 )
 
 type (
@@ -60,14 +60,15 @@ type (
 		Elapsed   time.Duration
 	}
 	Recv struct { //接收结果
-		empty      bool        //是否为空结果
-		levelIndex int         //层级索引
-		urlIndex   int         //网址列表索引
-		result     interface{} //采集结果数据
-		rule       *Rule       //页面规则
-		title      string      //页面标题
-		url        string      //网址
-		parent     *Recv       //上级页面结果
+		Index       int
+		IsEmpty     bool        //是否为空结果
+		LevelIndex  int         //层级索引
+		URLIndex    int         //网址列表索引
+		Result      interface{} //采集结果数据
+		rule        *Rule       //页面规则
+		Title       string      //页面标题
+		URL         string      //网址
+		pagesResult map[uint]map[int]*Recv
 	}
 )
 
@@ -86,88 +87,50 @@ func (c *Result) ElapsedString(lang string) string {
 
 // ================== Recv ====================
 
-func (c *Recv) IsEmpty() bool {
-	return c.empty
-}
-
-func (c *Recv) TreeJSON() string {
-	m := echo.H{
-		`empty`:      c.empty,
-		`levelIndex`: c.levelIndex,
-		`urlIndex`:   c.urlIndex,
-		`result`:     c.result,
-		`title`:      c.title,
-		`url`:        c.url,
-	}
-	if c.parent != nil {
-		m[`parent`] = json.RawMessage(com.Str2bytes(c.parent.TreeJSON()))
-	}
-	b, _ := json.MarshalIndent(m, ``, `  `)
-	return string(b)
-}
-
 func (c *Recv) String() string {
-	b, _ := json.MarshalIndent(c.result, ``, `  `)
+	b, _ := json.MarshalIndent(c, ``, `  `)
 	return string(b)
 }
 
-func (c *Recv) LevelIndex() int {
-	return c.levelIndex
-}
-
-func (c *Recv) URLIndex() int {
-	return c.urlIndex
-}
-
-func (c *Recv) Result(args ...int) interface{} {
-	if len(args) > 0 {
-		index := args[0]
-		if index < 0 {
-			return echo.H{}
+func (c *Recv) ResultByIndex(index int) interface{} {
+	if res, ok := c.Result.([]interface{}); ok {
+		if len(res) > index {
+			return res[index]
 		}
-		if res, ok := c.result.([]interface{}); ok {
-			if len(res) > index {
-				return res[index]
-			}
-		}
-		return echo.H{}
 	}
-	return c.result
+	return echo.H{}
 }
 
 func (c *Recv) Rule() *Rule {
 	return c.rule
 }
 
-func (c *Recv) URL() string {
-	return c.url
-}
-
-func (c *Recv) Title() string {
-	return c.title
-}
-
 func (c *Recv) ParentItem() interface{} {
-	return c.Parent().Result(c.urlIndex)
+	return c.Parent().ResultByIndex(c.URLIndex)
 }
 
 func (c *Recv) ParentResult() interface{} {
-	return c.Parent().Result()
+	return c.Parent().Result
 }
 
 func (c *Recv) ParentsResult(lasts ...int) interface{} {
-	return c.Parents(lasts...).Result()
+	return c.Parents(lasts...).Result
 }
 
 func (c *Recv) ParentsItem(lasts ...int) interface{} {
-	return c.Parents(lasts...).Result(c.urlIndex)
+	return c.Parents(lasts...).ResultByIndex(c.URLIndex)
 }
 
 func (c *Recv) Parent() *Recv {
-	if c.parent != nil {
-		return c.parent
+	parentPage, ok := c.pagesResult[c.rule.ParentId]
+	if !ok {
+		return emptyRecv
 	}
-	return emptyRecv
+	parentResult, ok := parentPage[c.URLIndex]
+	if !ok {
+		return emptyRecv
+	}
+	return parentResult
 }
 
 func (c *Recv) Parents(lasts ...int) *Recv {
@@ -175,18 +138,21 @@ func (c *Recv) Parents(lasts ...int) *Recv {
 	if len(lasts) > 0 {
 		last = lasts[0]
 	}
-	if last <= 1 {
+	if last <= 0 {
 		return c
 	}
-	r := c.parent
-	if r == nil {
-		return emptyRecv
-	}
-	for i := 2; i <= last; i++ {
-		if r.parent == nil {
+	r := c
+	parentID := c.rule.ParentId
+	for i := 1; i <= last; i++ {
+		parentPage, ok := c.pagesResult[parentID]
+		if !ok {
 			return emptyRecv
 		}
-		r = r.parent
+		r, ok = parentPage[c.URLIndex]
+		if !ok {
+			return emptyRecv
+		}
+		parentID = r.rule.ParentId
 	}
 	if r == nil {
 		return emptyRecv
