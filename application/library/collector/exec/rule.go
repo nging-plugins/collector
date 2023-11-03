@@ -110,7 +110,7 @@ func (c *Rule) Collect(parentID uint64, parentURL string, recv *Recv,
 	}
 	recv.LevelIndex++
 	enterURL, err := c.ParseTmplContent(c.NgingCollectorPage.EnterUrl, recv)
-	common.WriteCache(`collector-debug`, `enterUrl-`+fmt.Sprintf(`%d-%d-%d`, recv.LevelIndex, recv.URLIndex, recv.Index)+`.json`, com.Str2bytes(ppnocolor.Sprint(recv)))
+	common.WriteCache(`collector-debug`, `enterUrl-`+fmt.Sprintf(`%d_%d_%d`, recv.LevelIndex, recv.URLIndex, recv.Index)+`.json`, com.Str2bytes(ppnocolor.Sprint(recv)))
 	if err != nil {
 		return nil, err
 	}
