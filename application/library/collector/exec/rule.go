@@ -160,8 +160,7 @@ func (c *Rule) Collect(parentID uint64, parentURL string,
 		})
 	}
 	if progress != nil && levelIndex == 0 {
-		progress.Finish = 0
-		progress.Total = int64(len(urlList))
+		progress.Add(int64(len(urlList)) * 100)
 	}
 	historyMdl := dbschema.NewNgingCollectorHistory(c.Context())
 
@@ -202,13 +201,13 @@ func (c *Rule) Collect(parentID uint64, parentURL string,
 				}
 			}
 		}
-		if progress != nil && levelIndex == 0 {
-			progress.Finish = int64(urlIndex + 1)
-		}
 		if c.debug {
 			break
 		}
 	} //end-for:range urlList
+	if progress != nil && levelIndex == 0 {
+		progress.SetComplete()
+	}
 	return result, err
 }
 
@@ -217,10 +216,18 @@ func (c *Rule) CollectOne(levelIndex int, urlIndex int,
 	fetch Fether, extra []*Rule,
 	noticeSender sender.Notice,
 	progress *notice.Progress, historyMdl *dbschema.NgingCollectorHistory) (collection interface{}, result []Result, ignore bool, err error) {
-	if _, ok := c.pagesResult[c.Id][urlIndex]; ok {
-		ignore = true
-		return
+	perVal := 100 / float64(len(extra)+1)
+	if progress != nil && levelIndex == 0 {
+		defer func() {
+			if ignore {
+				progress.Done(param.AsInt64(perVal))
+			}
+		}()
 	}
+	// if _, ok := c.pagesResult[c.Id][urlIndex]; ok {
+	// 	ignore = true
+	// 	return
+	// }
 	if len(parentURL) > 0 {
 		pageURL = com.AbsURL(parentURL, pageURL)
 	}
@@ -386,6 +393,9 @@ func (c *Rule) CollectOne(levelIndex int, urlIndex int,
 	}
 	if len(extraResult) > 0 {
 		result = append(result, extraResult...)
+	}
+	if progress != nil && levelIndex == 0 {
+		progress.Done(param.AsInt64(perVal * float64(len(extra))))
 	}
 	return
 }
