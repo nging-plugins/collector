@@ -416,7 +416,7 @@ func (c *Rule) collectExtra(parentResult *Recv, urlIndex int, parentURL string,
 			pageRuleFormCopy.NgingCollectorPage.Charset = c.NgingCollectorPage.Charset
 		}
 		var extraResult []Result
-		if pageRuleFormCopy.HasChild == common.BoolN {
+		if pageRuleFormCopy.HasChild == common.BoolN || c.debug {
 			extraResult, err = pageRuleFormCopy.Collect(
 				historyID, parentURL, _result, fetch,
 				nil,
