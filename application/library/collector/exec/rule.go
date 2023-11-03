@@ -404,7 +404,7 @@ func (c *Rule) collectExtra(parentResult *Recv, urlIndex int, parentURL string,
 		pageRuleFormCopy := *pageRuleForm
 		_result := &Recv{
 			Index:      index,
-			LevelIndex: parentResult.LevelIndex,
+			LevelIndex: lastResult.LevelIndex,
 			URLIndex:   urlIndex,
 			//rule:       &pageRuleFormCopy,
 			parent: lastResult,
