@@ -101,16 +101,16 @@ func (c *Rule) ParseTmplContent(tmplContent string, result *Recv) (string, error
 	return strings.TrimSpace(buf.String()), err
 }
 
-func (c *Rule) Collect(parentID uint64, parentURL string, parentResult *Recv,
+func (c *Rule) Collect(parentID uint64, parentURL string, recv *Recv,
 	fetch Fether, extra []*Rule,
 	noticeSender sender.Notice,
 	progress *notice.Progress) ([]Result, error) {
 	if c.IsExited() {
 		return nil, ErrForcedExit
 	}
-	parentResult.LevelIndex++
-	enterURL, err := c.ParseTmplContent(c.NgingCollectorPage.EnterUrl, parentResult)
-	common.WriteCache(`collector-debug`, `enterUrl-`+param.AsString(parentResult.LevelIndex)+`.json`, com.Str2bytes(ppnocolor.Sprint(parentResult)))
+	recv.LevelIndex++
+	enterURL, err := c.ParseTmplContent(c.NgingCollectorPage.EnterUrl, recv)
+	common.WriteCache(`collector-debug`, `enterUrl-`+fmt.Sprintf(`%d-%d-%d`, recv.LevelIndex, recv.URLIndex, recv.Index)+`.json`, com.Str2bytes(ppnocolor.Sprint(recv)))
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (c *Rule) Collect(parentID uint64, parentURL string, parentResult *Recv,
 			return true
 		})
 	}
-	if progress != nil && parentResult.LevelIndex == 0 {
+	if progress != nil && recv.LevelIndex == 0 {
 		progress.Add(int64(len(urlList)) * 100)
 	}
 	historyMdl := dbschema.NewNgingCollectorHistory(c.Context())
@@ -160,7 +160,7 @@ func (c *Rule) Collect(parentID uint64, parentURL string, parentResult *Recv,
 		if c.IsExited() {
 			return result, ErrForcedExit
 		}
-		collection, urlResult, ignore, err := c.CollectOne(parentResult, urlIndex, parentID, parentURL, pageURL, fetch, extra, noticeSender, progress, historyMdl)
+		collection, urlResult, ignore, err := c.CollectOne(recv, urlIndex, parentID, parentURL, pageURL, fetch, extra, noticeSender, progress, historyMdl)
 		if err != nil {
 			return result, err
 		}
@@ -174,7 +174,7 @@ func (c *Rule) Collect(parentID uint64, parentURL string, parentResult *Recv,
 			if c.exportFn != nil {
 				switch collected := collection.(type) {
 				case map[string]interface{}:
-					c.exportFn(c.NgingCollectorPage.Id, parentResult, collected, noticeSender)
+					c.exportFn(c.NgingCollectorPage.Id, recv, collected, noticeSender)
 				case []interface{}:
 					for _, item := range collected {
 						collectedMap, ok := item.(map[string]interface{})
@@ -184,7 +184,7 @@ func (c *Rule) Collect(parentID uint64, parentURL string, parentResult *Recv,
 							}
 							continue
 						}
-						c.exportFn(c.NgingCollectorPage.Id, parentResult, collectedMap, noticeSender)
+						c.exportFn(c.NgingCollectorPage.Id, recv, collectedMap, noticeSender)
 					}
 				default:
 					if sendErr := noticeSender(fmt.Sprintf(`Unsupport export type: %T`, collection), 0); sendErr != nil {
@@ -197,19 +197,19 @@ func (c *Rule) Collect(parentID uint64, parentURL string, parentResult *Recv,
 			break
 		}
 	} //end-for:range urlList
-	if progress != nil && parentResult.LevelIndex == 0 {
+	if progress != nil && recv.LevelIndex == 0 {
 		progress.SetComplete()
 	}
 	return result, err
 }
 
-func (c *Rule) CollectOne(parentResult *Recv, urlIndex int,
+func (c *Rule) CollectOne(recv *Recv, urlIndex int,
 	parentID uint64, parentURL string, pageURL string,
 	fetch Fether, extra []*Rule,
 	noticeSender sender.Notice,
 	progress *notice.Progress, historyMdl *dbschema.NgingCollectorHistory) (collection interface{}, result []Result, ignore bool, err error) {
 	perVal := 100 / float64(len(extra)+1)
-	if progress != nil && parentResult.LevelIndex == 0 {
+	if progress != nil && recv.LevelIndex == 0 {
 		defer func() {
 			if ignore {
 				progress.Done(param.AsInt64(perVal))
@@ -228,9 +228,9 @@ func (c *Rule) CollectOne(parentResult *Recv, urlIndex int,
 		ruleMd5    string
 		contentMd5 string
 	)
-	parentResult.URL = pageURL
+	recv.URL = pageURL
 	// collection 的类型有两种可能：[]interface{} / map[string]interface{}
-	parentResult.Result = collection
+	recv.Result = collection
 	if !c.debug { //非测试模式才保存到数据库
 		err = historyMdl.Get(nil, `url_md5`, urlMD5)
 		if err != nil {
@@ -298,7 +298,7 @@ func (c *Rule) CollectOne(parentResult *Recv, urlIndex int,
 			}
 		}
 	}
-	collection, err = c.execPipe(parentResult, pageURL, content, fetch, noticeSender, progress)
+	collection, err = c.execPipe(recv, pageURL, content, fetch, noticeSender, progress)
 	if err != nil || collection == nil {
 		return
 	}
@@ -327,8 +327,8 @@ func (c *Rule) CollectOne(parentResult *Recv, urlIndex int,
 			}
 		}
 	}
-	parentResult.Title = pageTitle
-	parentResult.Result = collection
+	recv.Title = pageTitle
+	recv.Result = collection
 	// 记录第一个网址数据
 	if urlIndex == 0 {
 		endTime := time.Now()
@@ -374,39 +374,39 @@ func (c *Rule) CollectOne(parentResult *Recv, urlIndex int,
 	//msgbox.Table(ctx.T(`Result`), collection, 200)
 	//color.Red(`(%d) `+pageURL, levelIndex)
 	var extraResult []Result
-	extraResult, err = c.collectExtra(parentResult, urlIndex, pageURL, fetch, extra, noticeSender, progress, historyID)
+	extraResult, err = c.collectExtra(recv, urlIndex, pageURL, fetch, extra, noticeSender, progress, historyID)
 	if err != nil {
 		return
 	}
 	if len(extraResult) > 0 {
 		result = append(result, extraResult...)
 	}
-	if progress != nil && parentResult.LevelIndex == 0 {
+	if progress != nil && recv.LevelIndex == 0 {
 		progress.Done(param.AsInt64(perVal * float64(len(extra))))
 	}
 	return
 }
 
-func (c *Rule) collectExtra(parentResult *Recv, urlIndex int, parentURL string,
+func (c *Rule) collectExtra(recv *Recv, urlIndex int, parentURL string,
 	fetch Fether, extra []*Rule,
 	noticeSender sender.Notice,
 	progress *notice.Progress, historyID uint64) (result []Result, err error) {
-	if len(extra) <= parentResult.LevelIndex {
+	if len(extra) <= recv.LevelIndex {
 		return
 	}
-	lastResult := parentResult
-	for index, pageRuleForm := range extra[parentResult.LevelIndex:] {
+	lastRecv := recv
+	for index, pageRuleForm := range extra[recv.LevelIndex:] {
 		if c.IsExited() {
 			err = ErrForcedExit
 			return
 		}
 		pageRuleFormCopy := *pageRuleForm
-		_result := &Recv{
+		recv := &Recv{
 			Index:      index,
-			LevelIndex: lastResult.LevelIndex,
+			LevelIndex: lastRecv.LevelIndex,
 			URLIndex:   urlIndex,
 			//rule:       &pageRuleFormCopy,
-			parent: lastResult,
+			parent: lastRecv,
 		}
 		pageRuleFormCopy.debug = c.debug
 		pageRuleFormCopy.exportFn = c.exportFn
@@ -417,13 +417,13 @@ func (c *Rule) collectExtra(parentResult *Recv, urlIndex int, parentURL string,
 		var extraResult []Result
 		if pageRuleFormCopy.HasChild == common.BoolN || c.debug {
 			extraResult, err = pageRuleFormCopy.Collect(
-				historyID, parentURL, _result, fetch,
+				historyID, parentURL, recv, fetch,
 				nil,
 				noticeSender, progress,
 			)
 		} else {
 			extraResult, err = pageRuleFormCopy.Collect(
-				historyID, parentURL, _result, fetch,
+				historyID, parentURL, recv, fetch,
 				extra,
 				noticeSender, progress,
 			)
@@ -432,12 +432,12 @@ func (c *Rule) collectExtra(parentResult *Recv, urlIndex int, parentURL string,
 			return
 		}
 		result = append(result, extraResult...)
-		lastResult = _result
+		lastRecv = recv
 	}
 	return
 }
 
-func (c *Rule) execPipe(parentResult *Recv, pageURL string, content []byte, fetch Fether,
+func (c *Rule) execPipe(recv *Recv, pageURL string, content []byte, fetch Fether,
 	noticeSender sender.Notice,
 	progress *notice.Progress) (collection interface{}, err error) {
 	subItems := []gopiper.PipeItem{}
@@ -448,11 +448,11 @@ func (c *Rule) execPipe(parentResult *Recv, pageURL string, content []byte, fetc
 			Selector: rule.Rule,
 			Filter:   rule.Filter,
 		}
-		subItem.Selector, err = c.ParseTmplContent(subItem.Selector, parentResult)
+		subItem.Selector, err = c.ParseTmplContent(subItem.Selector, recv)
 		if err != nil {
 			return
 		}
-		subItem.Filter, err = c.ParseTmplContent(subItem.Filter, parentResult)
+		subItem.Filter, err = c.ParseTmplContent(subItem.Filter, recv)
 		if err != nil {
 			return
 		}
@@ -469,11 +469,11 @@ func (c *Rule) execPipe(parentResult *Recv, pageURL string, content []byte, fetc
 			Selector: c.NgingCollectorPage.ScopeRule,
 			SubItem:  []gopiper.PipeItem{child},
 		}
-		pipe.Filter, err = c.ParseTmplContent(pipe.Filter, parentResult)
+		pipe.Filter, err = c.ParseTmplContent(pipe.Filter, recv)
 		if err != nil {
 			return
 		}
-		pipe.Selector, err = c.ParseTmplContent(pipe.Selector, parentResult)
+		pipe.Selector, err = c.ParseTmplContent(pipe.Selector, recv)
 		if err != nil {
 			return
 		}
@@ -502,7 +502,7 @@ func (c *Rule) execPipe(parentResult *Recv, pageURL string, content []byte, fetc
 	})
 	pipe.SetStorer(func(fileURL string, savePath string, fetched bool) (newPath string, err error) {
 		newPath = savePath
-		newPath, err = c.ParseTmplContent(newPath, parentResult)
+		newPath, err = c.ParseTmplContent(newPath, recv)
 		if err != nil {
 			return newPath, err
 		}
