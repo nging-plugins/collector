@@ -20,6 +20,7 @@ package exec
 
 import (
 	"encoding/gob"
+	"encoding/json"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -59,13 +60,14 @@ type (
 		Elapsed   time.Duration
 	}
 	Recv struct { //接收结果
-		empty  bool        //是否为空结果
-		index  int         //数字索引
-		result interface{} //采集结果
-		rule   *Rule       //页面规则
-		title  string      //页面标题
-		url    string      //网址
-		parent *Recv
+		empty      bool        //是否为空结果
+		levelIndex int         //层级索引
+		urlIndex   int         //网址列表索引
+		result     interface{} //采集结果数据
+		rule       *Rule       //页面规则
+		title      string      //页面标题
+		url        string      //网址
+		parent     *Recv       //上级页面结果
 	}
 )
 
@@ -82,12 +84,39 @@ func (c *Result) ElapsedString(lang string) string {
 	return duration.String()
 }
 
+// ================== Recv ====================
+
 func (c *Recv) IsEmpty() bool {
 	return c.empty
 }
 
-func (c *Recv) Index() int {
-	return c.index
+func (c *Recv) TreeJSON() string {
+	m := echo.H{
+		`empty`:      c.empty,
+		`levelIndex`: c.levelIndex,
+		`urlIndex`:   c.urlIndex,
+		`result`:     c.result,
+		`title`:      c.title,
+		`url`:        c.url,
+	}
+	if c.parent != nil {
+		m[`parent`] = json.RawMessage(com.Str2bytes(c.parent.TreeJSON()))
+	}
+	b, _ := json.MarshalIndent(m, ``, `  `)
+	return string(b)
+}
+
+func (c *Recv) String() string {
+	b, _ := json.MarshalIndent(c.result, ``, `  `)
+	return string(b)
+}
+
+func (c *Recv) LevelIndex() int {
+	return c.levelIndex
+}
+
+func (c *Recv) URLIndex() int {
+	return c.urlIndex
 }
 
 func (c *Recv) Result(args ...int) interface{} {
@@ -118,12 +147,20 @@ func (c *Recv) Title() string {
 	return c.title
 }
 
+func (c *Recv) ParentItem() interface{} {
+	return c.Parent().Result(c.urlIndex)
+}
+
 func (c *Recv) ParentResult() interface{} {
-	return c.Parent().Result(c.index)
+	return c.Parent().Result()
 }
 
 func (c *Recv) ParentsResult(lasts ...int) interface{} {
-	return c.Parents(lasts...).Result(c.index)
+	return c.Parents(lasts...).Result()
+}
+
+func (c *Recv) ParentsItem(lasts ...int) interface{} {
+	return c.Parents(lasts...).Result(c.urlIndex)
 }
 
 func (c *Recv) Parent() *Recv {

@@ -18,6 +18,7 @@ require (
 	github.com/admpub/marmot v0.0.0-20200702042226-2170d9ff59f5
 	github.com/admpub/nging/v5 v5.0.0
 	github.com/admpub/phantomjs v0.0.0-20180924162111-8a5af756140e
+	github.com/admpub/pp v0.0.7
 	github.com/admpub/regexp2 v1.1.7
 	github.com/chromedp/cdproto v0.0.0-20231025043423-5615e204d422
 	github.com/chromedp/chromedp v0.9.3
@@ -26,7 +27,7 @@ require (
 	github.com/tebeka/selenium v0.9.9
 	github.com/webx-top/com v1.1.3
 	github.com/webx-top/db v1.27.1
-	github.com/webx-top/echo v2.39.7+incompatible
+	github.com/webx-top/echo v2.39.8+incompatible
 )
 
 require (

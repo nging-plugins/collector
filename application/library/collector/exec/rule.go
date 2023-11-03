@@ -20,6 +20,7 @@ package exec
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -60,12 +61,12 @@ var RegexpTitle = regexp.MustCompile(`(?i)<title[\s]*>([^<]+)</title[\s]*>`)
 
 // Rule 页面规则
 type Rule struct {
-	*dbschema.NgingCollectorPage
-	RuleList []*dbschema.NgingCollectorRule
-	debug    bool
-	exportFn func(pageID uint, result *Recv, collected echo.Store, noticeSender sender.Notice) error
-	isExited func() bool
-	result   *Recv
+	*dbschema.NgingCollectorPage                                // 页面配置
+	RuleList                     []*dbschema.NgingCollectorRule // 采集规则列表
+	debug                        bool
+	exportFn                     func(pageID uint, result *Recv, collected echo.Store, noticeSender sender.Notice) error
+	isExited                     func() bool
+	result                       *Recv // 接收到的采集结果
 }
 
 func (c *Rule) IsExited() bool {
@@ -79,7 +80,7 @@ func (c *Rule) Result() *Recv {
 	return c.result
 }
 
-func (c *Rule) ParseTmplContent(tmplContent string) (string, error) {
+func (c *Rule) ParseTmplContent(pageIndex int, tmplContent string) (string, error) {
 	if len(tmplContent) == 0 || strings.Index(tmplContent, `{{`) < 0 {
 		return tmplContent, nil
 	}
@@ -87,24 +88,30 @@ func (c *Rule) ParseTmplContent(tmplContent string) (string, error) {
 	t := template.New(md5).Funcs(tplfunc.TplFuncMap)
 	_, err := t.Parse(tmplContent)
 	if err != nil {
-		return ``, err
+		err = fmt.Errorf(`failed to parse(#%d): %w`, pageIndex, echo.ParseTemplateError(err, tmplContent))
+		return ``, echo.NewPanicError(nil, err)
 	}
 	buf := bytes.NewBuffer(nil)
 	err = t.Execute(buf, c.result)
 	if err != nil {
-		return ``, err
+		err = fmt.Errorf(`failed to execute(#%d): %w`, pageIndex, errors.Join(
+			echo.ParseTemplateError(err, tmplContent),
+			fmt.Errorf(`parent data: %s`, c.result.Parent()),
+		))
+		return ``, echo.NewPanicError(nil, err)
 	}
 	return strings.TrimSpace(buf.String()), err
 }
 
-func (c *Rule) Collect(parentID uint64,
-	fetch Fether, index int, extra []*Rule,
+func (c *Rule) Collect(parentID uint64, parentURL string,
+	fetch Fether, extra []*Rule,
 	noticeSender sender.Notice,
 	progress *notice.Progress) ([]Result, error) {
 	if c.IsExited() {
 		return nil, ErrForcedExit
 	}
-	enterURL, err := c.ParseTmplContent(c.NgingCollectorPage.EnterUrl)
+	levelIndex := c.result.levelIndex + 1
+	enterURL, err := c.ParseTmplContent(levelIndex, c.NgingCollectorPage.EnterUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +121,6 @@ func (c *Rule) Collect(parentID uint64,
 	if len(enterURL) == 0 {
 		return nil, nil
 	}
-	index++
 	var (
 		urlList []string
 		result  []Result
@@ -146,294 +152,23 @@ func (c *Rule) Collect(parentID uint64,
 			return true
 		})
 	}
-	if progress != nil && index == 1 {
+	if progress != nil && levelIndex == 0 {
 		progress.Finish = 0
 		progress.Total = int64(len(urlList))
 	}
-	// collection 的类型有两种可能：[]interface{} / map[string]interface{}
-	var collection interface{}
 	historyMdl := dbschema.NewNgingCollectorHistory(c.Context())
-	for pageKey, pageURL := range urlList {
+	for urlIndex, pageURL := range urlList {
 		if c.IsExited() {
 			return result, ErrForcedExit
 		}
-		urlMD5 := com.Md5(pageURL)
-		var (
-			historyID  uint64
-			content    []byte
-			encoded    []byte
-			transcoded bool
-			ruleMd5    string
-			contentMd5 string
-		)
-		c.result.url = pageURL
-		c.result.result = collection
-		if !c.debug { //非测试模式才保存到数据库
-			err = historyMdl.Get(nil, `url_md5`, urlMD5)
-			if err != nil {
-				if err != db.ErrNoMoreRows {
-					return nil, err
-				}
-				//不存在记录
-			} else if historyMdl.Id > 0 {
-				if c.NgingCollectorPage.DuplicateRule == `url` {
-					continue
-				}
-				historyID = historyMdl.Id
-			}
-			encoded, err = com.GobEncode(c.RuleList)
-			if err != nil {
-				return nil, err
-			}
-			ruleMd5 = com.ByteMd5(encoded)
-			if historyID > 0 && historyMdl.RuleMd5 == ruleMd5 && c.NgingCollectorPage.DuplicateRule == `rule` { //规则没有更改过的情况下，如果已经采集过则跳过
-				continue
-			}
-		}
-		if sendErr := noticeSender(`<collector> Fetching URL: `+pageURL, 1, progress); sendErr != nil {
-			return nil, sendErr
-		}
-		startTime := time.Now()
-		content, transcoded, err = fetch(pageURL, c.NgingCollectorPage.Charset)
-		if err != nil {
-			if err == io.EOF {
-				log.Error(err)
-				continue
-			}
-			return nil, err
-		}
-		if !c.debug { //非测试模式才保存到数据库
-			contentMd5 = com.ByteMd5(content)
-			if historyID > 0 && historyMdl.Content == contentMd5 && c.NgingCollectorPage.DuplicateRule == `content` { //规则没有更改过的情况下，如果已经采集过则跳过
-				continue
-			}
-			historyMdl.Reset()
-			historyMdl.RuleMd5 = ruleMd5
-			historyMdl.Created = uint(time.Now().Unix())
-			historyMdl.Url = pageURL
-			historyMdl.UrlMd5 = urlMD5
-			historyMdl.PageId = c.NgingCollectorPage.Id
-			historyMdl.PageParentId = c.NgingCollectorPage.ParentId
-			historyMdl.PageRootId = c.NgingCollectorPage.RootId
-			historyMdl.ParentId = parentID
-			historyMdl.HasChild = c.NgingCollectorPage.HasChild
-			historyMdl.Content = contentMd5
-		}
-		if !transcoded {
-			if len(c.NgingCollectorPage.Charset) < 1 {
-				c.NgingCollectorPage.Charset = `utf-8`
-			}
-			// 字符集转码
-			if strings.ToLower(c.NgingCollectorPage.Charset) != `utf-8` {
-				content, err = charset.Convert(c.NgingCollectorPage.Charset, `utf-8`, content)
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
-		subItems := []gopiper.PipeItem{}
-		for _, rule := range c.RuleList {
-			subItem := gopiper.PipeItem{
-				Name:     rule.Name,
-				Type:     rule.Type,
-				Selector: rule.Rule,
-				Filter:   rule.Filter,
-			}
-			subItem.Selector, err = c.ParseTmplContent(subItem.Selector)
-			if err != nil {
-				return nil, err
-			}
-			subItem.Filter, err = c.ParseTmplContent(subItem.Filter)
-			if err != nil {
-				return nil, err
-			}
-			subItems = append(subItems, subItem)
-		}
-		var pipe gopiper.PipeItem
-		if c.NgingCollectorPage.Type == `list` {
-			child := gopiper.PipeItem{
-				Type:    `map`,
-				SubItem: subItems,
-			}
-			pipe = gopiper.PipeItem{
-				Type:     `array`,
-				Selector: c.NgingCollectorPage.ScopeRule,
-				SubItem:  []gopiper.PipeItem{child},
-			}
-			pipe.Filter, err = c.ParseTmplContent(pipe.Filter)
-			if err != nil {
-				return nil, err
-			}
-			pipe.Selector, err = c.ParseTmplContent(pipe.Selector)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			pipe = gopiper.PipeItem{
-				Type:    `map`,
-				SubItem: subItems,
-			}
-		}
-		pipe.SetFetcher(func(pURL string) (body []byte, err error) {
-			pURL = com.AbsURL(pageURL, pURL)
-			body, transcoded, err := fetch(pURL, c.NgingCollectorPage.Charset)
-			if !transcoded {
-				if len(c.NgingCollectorPage.Charset) < 1 {
-					c.NgingCollectorPage.Charset = `utf-8`
-				}
-				// 字符集转码
-				if strings.ToLower(c.NgingCollectorPage.Charset) != `utf-8` {
-					body, err = charset.Convert(c.NgingCollectorPage.Charset, `utf-8`, body)
-					if err != nil {
-						return
-					}
-				}
-			}
-			return
-		})
-		pipe.SetStorer(func(fileURL string, savePath string, fetched bool) (newPath string, err error) {
-			newPath = savePath
-			newPath, err = c.ParseTmplContent(newPath)
-			if err != nil {
-				return newPath, err
-			}
-			if strings.HasSuffix(newPath, `/`) || strings.HasSuffix(newPath, `\`) {
-				newPath += path.Base(fileURL)
-			}
-			saveTo := filepath.Join(echo.Wd(), newPath)
-			saveDir := filepath.Dir(saveTo)
-			err = com.MkdirAll(saveDir, os.ModePerm)
-			if err != nil {
-				return newPath, err
-			}
-			if sendErr := noticeSender(`download file: `+fileURL+` => `+saveTo, 1, progress); sendErr != nil {
-				return newPath, sendErr
-			}
-			if fetched {
-				err = os.WriteFile(saveTo, []byte(fileURL), os.ModePerm)
-				return
-			}
-			fileURL = com.AbsURL(pageURL, fileURL)
-			_, err = download.Download(fileURL, saveTo, nil)
-			return
-		})
-		collection, err = pipe.PipeBytes(content, c.NgingCollectorPage.ContentType)
-		if err != nil {
-			if err != gopiper.ErrInvalidContent { //跳过无效内容
-				if sendErr := noticeSender(err.Error(), 0, progress); sendErr != nil {
-					return result, sendErr
-				}
-			}
-			if c.debug {
-				return result, err
-			}
-			err = nil
-			continue
-		}
-		if collection == nil {
-			continue
-		}
-
-		// 自动获取页面标题
-		var pageTitle string
-		switch c.NgingCollectorPage.ContentType {
-		case `html`:
-			find := RegexpTitle.FindAllStringSubmatch(engine.Bytes2str(content), 1)
-			if len(find) > 0 && len(find[0]) > 1 {
-				pageTitle = strings.TrimSpace(find[0][1])
-			}
-			if len(pageTitle) == 0 {
-				if mp, ok := collection.(map[string]interface{}); ok {
-					if tt, ok := mp[`title`]; ok {
-						pageTitle = com.Str(tt)
-					}
-				}
-			}
-		case `json`:
-			fallthrough
-		case `text`:
-			if mp, ok := collection.(map[string]interface{}); ok {
-				if tt, ok := mp[`title`]; ok {
-					pageTitle = com.Str(tt)
-				}
-			}
-		}
-		c.result.title = pageTitle
-		c.result.result = collection
-		// 记录第一个网址数据
-		if pageKey == 0 {
-			endTime := time.Now()
-			result = append(result, Result{
-				Title:     pageTitle,
-				URL:       pageURL,
-				Result:    collection,
-				Type:      pipe.Type,
-				StartTime: startTime,
-				EndTime:   endTime,
-				Elapsed:   endTime.Sub(startTime),
-			})
-		}
-		encoded, err = com.JSONEncode(collection)
+		collection, urlResult, err := c.CollectOne(levelIndex, urlIndex, parentID, parentURL, pageURL, fetch, extra, noticeSender, progress, historyMdl)
 		if err != nil {
 			return result, err
 		}
-		//historyMdl.Data = string(encoded)
-		err = common.WriteCache(`colloctor`, urlMD5+`.json`, encoded)
-		if err != nil {
-			return result, err
+		if len(urlResult) > 0 {
+			result = append(result, urlResult...)
 		}
-
-		if !c.debug { //非测试模式才保存到数据库
-			historyMdl.Title = pageTitle
-			if historyID > 0 {
-				err = historyMdl.Update(nil, `id`, historyID)
-			} else {
-				_, err = historyMdl.Insert()
-				if err == nil {
-					historyID = historyMdl.Id
-				}
-			}
-			if err != nil {
-				return result, err
-			}
-		}
-		//msgbox.Table(ctx.T(`Result`), collection, 200)
-		//color.Red(`(%d) `+pageURL, index)
-		if len(extra) > index {
-			lastRuleForm := c
-			for _, pageRuleForm := range extra[index:] {
-				if c.IsExited() {
-					return result, ErrForcedExit
-				}
-				pageRuleForm.result = &Recv{
-					index:  pageKey,
-					rule:   pageRuleForm,
-					parent: lastRuleForm.result,
-				}
-				pageRuleForm.debug = c.debug
-				pageRuleForm.exportFn = c.exportFn
-				pageRuleForm.isExited = c.isExited
-				if len(pageRuleForm.NgingCollectorPage.Charset) < 1 {
-					pageRuleForm.NgingCollectorPage.Charset = c.NgingCollectorPage.Charset
-				}
-				var extraResult []Result
-				extraResult, err = pageRuleForm.Collect(
-					historyID,
-					fetch,
-					index,
-					extra,
-					noticeSender,
-					progress,
-				)
-				if err != nil {
-					return result, err
-				}
-				result = append(result, extraResult...)
-				lastRuleForm = pageRuleForm
-			}
-		}
-
-		if c.NgingCollectorPage.HasChild == `N` { //这是最底层
+		if collection != nil && c.NgingCollectorPage.HasChild == `N` { //这是最底层
 			if c.exportFn != nil {
 				switch collected := collection.(type) {
 				case map[string]interface{}:
@@ -456,12 +191,330 @@ func (c *Rule) Collect(parentID uint64,
 				}
 			}
 		}
-		if progress != nil && index == 1 {
-			progress.Finish = int64(pageKey + 1)
+		if progress != nil && levelIndex == 0 {
+			progress.Finish = int64(urlIndex + 1)
 		}
 		if c.debug {
 			break
 		}
 	} //end-for:range urlList
 	return result, err
+}
+
+func (c *Rule) CollectOne(levelIndex int, urlIndex int,
+	parentID uint64, parentURL string, pageURL string,
+	fetch Fether, extra []*Rule,
+	noticeSender sender.Notice,
+	progress *notice.Progress, historyMdl *dbschema.NgingCollectorHistory) (collection interface{}, result []Result, err error) {
+
+	if len(parentURL) > 0 {
+		pageURL = com.AbsURL(parentURL, pageURL)
+	}
+	urlMD5 := com.Md5(pageURL)
+	var (
+		historyID  uint64
+		content    []byte
+		encoded    []byte
+		transcoded bool
+		ruleMd5    string
+		contentMd5 string
+	)
+	c.result.url = pageURL
+	// collection 的类型有两种可能：[]interface{} / map[string]interface{}
+	c.result.result = collection
+	if !c.debug { //非测试模式才保存到数据库
+		err = historyMdl.Get(nil, `url_md5`, urlMD5)
+		if err != nil {
+			if err != db.ErrNoMoreRows {
+				return
+			}
+			//不存在记录
+		} else if historyMdl.Id > 0 {
+			if c.NgingCollectorPage.DuplicateRule == `url` {
+				return
+			}
+			historyID = historyMdl.Id
+		}
+		encoded, err = com.GobEncode(c.RuleList)
+		if err != nil {
+			return
+		}
+		ruleMd5 = com.ByteMd5(encoded)
+		if historyID > 0 && historyMdl.RuleMd5 == ruleMd5 && c.NgingCollectorPage.DuplicateRule == `rule` { //规则没有更改过的情况下，如果已经采集过则跳过
+			return
+		}
+	}
+	if sendErr := noticeSender(`<collector> Fetching URL: `+pageURL, 1, progress); sendErr != nil {
+		err = sendErr
+		return
+	}
+	startTime := time.Now()
+	content, transcoded, err = fetch(pageURL, c.NgingCollectorPage.Charset)
+	if err != nil {
+		if err == io.EOF {
+			log.Error(err)
+			err = nil
+		}
+		return
+	}
+	if !c.debug { //非测试模式才保存到数据库
+		contentMd5 = com.ByteMd5(content)
+		if historyID > 0 && historyMdl.Content == contentMd5 && c.NgingCollectorPage.DuplicateRule == `content` { //规则没有更改过的情况下，如果已经采集过则跳过
+			return
+		}
+		historyMdl.Reset()
+		historyMdl.RuleMd5 = ruleMd5
+		historyMdl.Created = uint(time.Now().Unix())
+		historyMdl.Url = pageURL
+		historyMdl.UrlMd5 = urlMD5
+		historyMdl.PageId = c.NgingCollectorPage.Id
+		historyMdl.PageParentId = c.NgingCollectorPage.ParentId
+		historyMdl.PageRootId = c.NgingCollectorPage.RootId
+		historyMdl.ParentId = parentID
+		historyMdl.HasChild = c.NgingCollectorPage.HasChild
+		historyMdl.Content = contentMd5
+	}
+	if !transcoded {
+		if len(c.NgingCollectorPage.Charset) < 1 {
+			c.NgingCollectorPage.Charset = `utf-8`
+		}
+		// 字符集转码
+		if strings.ToLower(c.NgingCollectorPage.Charset) != `utf-8` {
+			content, err = charset.Convert(c.NgingCollectorPage.Charset, `utf-8`, content)
+			if err != nil {
+				return
+			}
+		}
+	}
+	var pipe gopiper.PipeItem
+	pipe, err = c.makePipe(levelIndex, pageURL, fetch, noticeSender, progress)
+	if err != nil {
+		return
+	}
+	collection, err = pipe.PipeBytes(content, c.NgingCollectorPage.ContentType)
+	if err != nil {
+		if err != gopiper.ErrInvalidContent { //跳过无效内容
+			if sendErr := noticeSender(err.Error(), 0, progress); sendErr != nil {
+				err = sendErr
+				return
+			}
+		}
+		if c.debug {
+			return
+		}
+		err = nil
+		return
+	}
+	if collection == nil {
+		return
+	}
+
+	// 自动获取页面标题
+	var pageTitle string
+	switch c.NgingCollectorPage.ContentType {
+	case `html`:
+		find := RegexpTitle.FindAllStringSubmatch(engine.Bytes2str(content), 1)
+		if len(find) > 0 && len(find[0]) > 1 {
+			pageTitle = strings.TrimSpace(find[0][1])
+		}
+		if len(pageTitle) == 0 {
+			if mp, ok := collection.(map[string]interface{}); ok {
+				if tt, ok := mp[`title`]; ok {
+					pageTitle = com.Str(tt)
+				}
+			}
+		}
+	case `json`:
+		fallthrough
+	case `text`:
+		if mp, ok := collection.(map[string]interface{}); ok {
+			if tt, ok := mp[`title`]; ok {
+				pageTitle = com.Str(tt)
+			}
+		}
+	}
+	c.result.title = pageTitle
+	c.result.result = collection
+	// 记录第一个网址数据
+	if urlIndex == 0 {
+		endTime := time.Now()
+		result = append(result, Result{
+			Title:     pageTitle,
+			URL:       pageURL,
+			Result:    collection,
+			Type:      pipe.Type,
+			StartTime: startTime,
+			EndTime:   endTime,
+			Elapsed:   endTime.Sub(startTime),
+		})
+	}
+	encoded, err = com.JSONEncode(collection)
+	if err != nil {
+		return
+	}
+	//historyMdl.Data = string(encoded)
+	err = common.WriteCache(`colloctor`, urlMD5+`.json`, encoded)
+	if err != nil {
+		return
+	}
+
+	if !c.debug { //非测试模式才保存到数据库
+		historyMdl.Title = pageTitle
+		if historyID > 0 {
+			err = historyMdl.Update(nil, `id`, historyID)
+		} else {
+			_, err = historyMdl.Insert()
+			if err == nil {
+				historyID = historyMdl.Id
+			}
+		}
+		if err != nil {
+			return
+		}
+	}
+	//msgbox.Table(ctx.T(`Result`), collection, 200)
+	//color.Red(`(%d) `+pageURL, levelIndex)
+	var extraResult []Result
+	extraResult, err = c.collectExtra(levelIndex, urlIndex, pageURL, fetch, extra[levelIndex:], noticeSender, progress, historyID)
+	if err != nil {
+		return
+	}
+	if len(extraResult) > 0 {
+		result = append(result, extraResult...)
+	}
+	return
+}
+
+func (c *Rule) collectExtra(levelIndex int, urlIndex int, parentURL string,
+	fetch Fether, extra []*Rule,
+	noticeSender sender.Notice,
+	progress *notice.Progress, historyID uint64) (result []Result, err error) {
+	if len(extra) <= levelIndex {
+		return
+	}
+	lastResult := c.result
+	for _, pageRuleForm := range extra[levelIndex:] {
+		if c.IsExited() {
+			err = ErrForcedExit
+			return
+		}
+		pageRuleForm.result = &Recv{
+			levelIndex: levelIndex,
+			urlIndex:   urlIndex,
+			rule:       pageRuleForm,
+			parent:     lastResult,
+		}
+		pageRuleForm.debug = c.debug
+		pageRuleForm.exportFn = c.exportFn
+		pageRuleForm.isExited = c.isExited
+		if len(pageRuleForm.NgingCollectorPage.Charset) < 1 {
+			pageRuleForm.NgingCollectorPage.Charset = c.NgingCollectorPage.Charset
+		}
+		var extraResult []Result
+		extraResult, err = pageRuleForm.Collect(
+			historyID,
+			parentURL,
+			fetch,
+			nil,
+			noticeSender,
+			progress,
+		)
+		if err != nil {
+			return
+		}
+		result = append(result, extraResult...)
+		lastResult = pageRuleForm.result
+	}
+	return
+}
+
+func (c *Rule) makePipe(levelIndex int, pageURL string, fetch Fether,
+	noticeSender sender.Notice,
+	progress *notice.Progress) (pipe gopiper.PipeItem, err error) {
+	subItems := []gopiper.PipeItem{}
+	for _, rule := range c.RuleList {
+		subItem := gopiper.PipeItem{
+			Name:     rule.Name,
+			Type:     rule.Type,
+			Selector: rule.Rule,
+			Filter:   rule.Filter,
+		}
+		subItem.Selector, err = c.ParseTmplContent(levelIndex, subItem.Selector)
+		if err != nil {
+			return
+		}
+		subItem.Filter, err = c.ParseTmplContent(levelIndex, subItem.Filter)
+		if err != nil {
+			return
+		}
+		subItems = append(subItems, subItem)
+	}
+	if c.NgingCollectorPage.Type == `list` {
+		child := gopiper.PipeItem{
+			Type:    `map`,
+			SubItem: subItems,
+		}
+		pipe = gopiper.PipeItem{
+			Type:     `array`,
+			Selector: c.NgingCollectorPage.ScopeRule,
+			SubItem:  []gopiper.PipeItem{child},
+		}
+		pipe.Filter, err = c.ParseTmplContent(levelIndex, pipe.Filter)
+		if err != nil {
+			return
+		}
+		pipe.Selector, err = c.ParseTmplContent(levelIndex, pipe.Selector)
+		if err != nil {
+			return
+		}
+	} else {
+		pipe = gopiper.PipeItem{
+			Type:    `map`,
+			SubItem: subItems,
+		}
+	}
+	pipe.SetFetcher(func(pURL string) (body []byte, err error) {
+		pURL = com.AbsURL(pageURL, pURL)
+		body, transcoded, err := fetch(pURL, c.NgingCollectorPage.Charset)
+		if !transcoded {
+			if len(c.NgingCollectorPage.Charset) < 1 {
+				c.NgingCollectorPage.Charset = `utf-8`
+			}
+			// 字符集转码
+			if strings.ToLower(c.NgingCollectorPage.Charset) != `utf-8` {
+				body, err = charset.Convert(c.NgingCollectorPage.Charset, `utf-8`, body)
+				if err != nil {
+					return
+				}
+			}
+		}
+		return
+	})
+	pipe.SetStorer(func(fileURL string, savePath string, fetched bool) (newPath string, err error) {
+		newPath = savePath
+		newPath, err = c.ParseTmplContent(levelIndex, newPath)
+		if err != nil {
+			return newPath, err
+		}
+		if strings.HasSuffix(newPath, `/`) || strings.HasSuffix(newPath, `\`) {
+			newPath += path.Base(fileURL)
+		}
+		saveTo := filepath.Join(echo.Wd(), newPath)
+		saveDir := filepath.Dir(saveTo)
+		err = com.MkdirAll(saveDir, os.ModePerm)
+		if err != nil {
+			return newPath, err
+		}
+		if sendErr := noticeSender(`download file: `+fileURL+` => `+saveTo, 1, progress); sendErr != nil {
+			return newPath, sendErr
+		}
+		if fetched {
+			err = os.WriteFile(saveTo, []byte(fileURL), os.ModePerm)
+			return
+		}
+		fileURL = com.AbsURL(pageURL, fileURL)
+		_, err = download.Download(fileURL, saveTo, nil)
+		return
+	})
+	return
 }
