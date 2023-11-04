@@ -59,7 +59,11 @@ func (s *Standard) Start(opt echo.Store) (err error) {
 	if err != nil {
 		return
 	}
-	s.Worker.SetUserAgent(miner.RandomUserAgent())
+	if len(s.UserAgent) > 0 {
+		s.Worker.SetUserAgent(s.UserAgent)
+	} else {
+		s.Worker.SetUserAgent(miner.RandomUserAgent())
+	}
 	return nil
 }
 
@@ -87,6 +91,16 @@ func (s *Standard) Do(pageURL string, data echo.Store) ([]byte, error) {
 
 	if formData, ok := data.Get(`formData`).(url.Values); ok {
 		s.Worker.SetForm(formData)
+	}
+	if s.Base.Header != nil {
+		for k, v := range s.Base.Header {
+			s.Worker.SetHeaderParm(k, v)
+		}
+	}
+	if s.Base.Cookie != nil {
+		s.Worker.SetCookie(s.Base.Cookie.String())
+	} else if len(s.Base.CookieString) > 0 {
+		s.Worker.SetCookie(s.Base.CookieString)
 	}
 
 	sleepSeconds := s.SleepSeconds()
