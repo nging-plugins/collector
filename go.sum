@@ -131,8 +131,8 @@ github.com/admpub/godotenv v1.4.3 h1:yxoRSi0rVWLNLC1c3v1MBw3At6fBTvTwGrVY/44huaA
 github.com/admpub/godotenv v1.4.3/go.mod h1:W8zOql4lSgnK6zfI6Le+GXlAaz5ZCj4kZI2wgcjar18=
 github.com/admpub/gohttp v0.0.0-20190322032039-b55c707b8f1e h1:PRSuHQW/9klTd5kzSWa9tjjq0bVlxUdBSNhouK1A91c=
 github.com/admpub/gohttp v0.0.0-20190322032039-b55c707b8f1e/go.mod h1:w2vchjU6ELhbHMoRJLPd+28TPksj8gf3dke0mRiLtDs=
-github.com/admpub/gopiper v1.0.2 h1:Dz7rLy2bqF24haVASuiEQKOniVCwh00CBSl9w8nY4q0=
-github.com/admpub/gopiper v1.0.2/go.mod h1:R6sJrstyUTD4NGKFIYbQQzxNYKKN6HQsj2hY8coPQCQ=
+github.com/admpub/gopiper v1.0.3 h1:PJbyldm5/nY0nlDvGXZ0FZq8Q/p+L1Jn791Sec4LRqE=
+github.com/admpub/gopiper v1.0.3/go.mod h1:khF1pT+Uo3JGmw24KcfsTP0fe8iIlhn1Dz/CGLQJyWc=
 github.com/admpub/humanize v0.0.0-20190501023926-5f826e92c8ca h1:9mfauR3d9p41BFnAoXmHc2z8yHcgg+3+jT1hbnQrtXo=
 github.com/admpub/humanize v0.0.0-20190501023926-5f826e92c8ca/go.mod h1:eHL6IsGOvDKqPc9Zp0d0NNayoEYoJ+UC+vj6zG0lGCY=
 github.com/admpub/i18n v0.2.6 h1:uW1NfvRAZ1XEwJg33/S0au20t/RaYiep+6K2q/ZD66A=
