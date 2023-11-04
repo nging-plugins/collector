@@ -97,8 +97,10 @@ func (s *Standard) Do(pageURL string, data echo.Store) ([]byte, error) {
 			s.Worker.SetHeaderParm(k, v)
 		}
 	}
-	if s.Base.Cookie != nil {
-		s.Worker.SetCookie(s.Base.Cookie.String())
+	if len(s.Base.Cookies) > 0 {
+		for _, cookie := range s.Base.Cookies {
+			s.Worker.Header.Add(`Cookie`, cookie.String())
+		}
 	} else if len(s.Base.CookieString) > 0 {
 		s.Worker.SetCookie(s.Base.CookieString)
 	}

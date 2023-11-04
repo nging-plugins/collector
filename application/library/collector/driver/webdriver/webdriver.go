@@ -133,18 +133,20 @@ func (s *WebDriver) Start(opt echo.Store) (err error) {
 		// 		//TODO
 		// 	}
 		// }
-		if s.Base.Cookie != nil {
-			cookie := &selenium.Cookie{
-				Name:   s.Base.Cookie.Name,
-				Value:  s.Base.Cookie.Value,
-				Path:   s.Base.Cookie.Path,
-				Domain: s.Base.Cookie.Domain,
-				Secure: s.Base.Cookie.Secure,
+		if len(s.Base.Cookies) > 0 {
+			for _, c := range s.Base.Cookies {
+				cookie := &selenium.Cookie{
+					Name:   c.Name,
+					Value:  c.Value,
+					Path:   c.Path,
+					Domain: c.Domain,
+					Secure: c.Secure,
+				}
+				if c.MaxAge > 0 {
+					cookie.Expiry = uint(c.MaxAge)
+				}
+				s.Driver.AddCookie(cookie)
 			}
-			if s.Base.Cookie.MaxAge > 0 {
-				cookie.Expiry = uint(s.Base.Cookie.MaxAge)
-			}
-			s.Driver.AddCookie(cookie)
 		} else if len(s.Base.CookieString) > 0 {
 			header := http.Header{}
 			header.Add("Cookie", s.Base.CookieString)

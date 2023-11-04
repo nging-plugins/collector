@@ -33,7 +33,7 @@ type Base struct {
 	Timeout          int
 	RandomDelay      string
 	minWait, maxWait int
-	Cookie           *http.Cookie
+	Cookies          []*http.Cookie
 	CookieString     string
 	Header           map[string]string
 	UserAgent        string
@@ -64,8 +64,10 @@ func (s *Base) Start(opt echo.Store) (err error) {
 		}
 	case *http.Cookie:
 		if cookieData.Valid() == nil {
-			s.Cookie = cookieData
+			s.Cookies = []*http.Cookie{cookieData}
 		}
+	case []*http.Cookie:
+		s.Cookies = cookieData
 	}
 	return nil
 }

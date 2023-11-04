@@ -13,7 +13,7 @@ require (
 	github.com/admpub/cr v0.0.2
 	github.com/admpub/go-download/v2 v2.1.13
 	github.com/admpub/go-phantomjs-fetcher v0.0.0-20180924162325-bb2ae1648e33
-	github.com/admpub/gopiper v1.0.3
+	github.com/admpub/gopiper v1.0.4
 	github.com/admpub/log v1.3.6
 	github.com/admpub/marmot v0.0.0-20200702042226-2170d9ff59f5
 	github.com/admpub/nging/v5 v5.0.0

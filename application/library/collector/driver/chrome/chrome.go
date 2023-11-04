@@ -80,8 +80,8 @@ func (s *Chrome) Start(opt echo.Store) (err error) {
 		s.actions = append(s.actions, network.SetExtraHTTPHeaders(network.Headers(headers)))
 	}
 	var cookies []*http.Cookie
-	if s.Base.Cookie != nil {
-		cookies = append(cookies, s.Base.Cookie)
+	if len(s.Base.Cookies) > 0 {
+		cookies = s.Base.Cookies
 	} else if len(s.Base.CookieString) > 0 {
 		header := http.Header{}
 		header.Add("Cookie", s.Base.CookieString)
