@@ -71,8 +71,8 @@ func (c *Rules) Collect(debug bool, noticeSender sender.Notice, progress *notice
 		}
 	}()
 	var fetch Fether
-	timeout := int(c.Rule.NgingCollectorPage.Timeout)
-	engine := c.Rule.NgingCollectorPage.Browser
+	timeout := int(c.Rule.Timeout)
+	engine := c.Rule.Browser
 	if len(engine) == 0 || engine == `default` {
 		engine = `standard`
 	}
@@ -87,8 +87,8 @@ func (c *Rules) Collect(debug bool, noticeSender sender.Notice, progress *notice
 		}
 		if err := browser.Start(echo.Store{
 			`timeout`: timeout,
-			`proxy`:   c.Rule.NgingCollectorPage.Proxy,
-			`delay`:   c.Rule.NgingCollectorPage.Waits,
+			`proxy`:   c.Rule.Proxy,
+			`delay`:   c.Rule.Waits,
 		}); err != nil {
 			return nil, err
 		}
@@ -143,14 +143,20 @@ func (c *Rules) Collect(debug bool, noticeSender sender.Notice, progress *notice
 	c.Rule.debug = debug
 	c.Rule.exportFn = c.exportFn
 	c.Rule.isExited = c.isExited
+	for _, extraPageRule := range c.Extra {
+		extraPageRule.debug = c.debug
+		extraPageRule.exportFn = c.exportFn
+		extraPageRule.isExited = c.isExited
+		if len(extraPageRule.Charset) < 1 {
+			extraPageRule.Charset = c.Rule.Charset
+		}
+	}
 	// 	err = browser.Close()
 	//入口页面
 	topRecv := &Recv{
-		Index:      -1,
 		LevelIndex: -1, //子页面层级计数，用来遍历c.Extra中的元素(作为Extra切片下标)，-1表示入口页面
-		//rule:       c.Rule,
-		Title: ``,
-		URL:   ``,
+		Title:      ``,
+		URL:        ``,
 	}
 	if noticeSender == nil {
 		noticeSender = sender.Default
