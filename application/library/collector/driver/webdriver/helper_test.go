@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/nging-plugins/collector/application/library/collector"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,7 +34,7 @@ func TestFectch(t *testing.T) {
 		panic(err)
 	}
 	defer service.Stop()
-	content, err := Fetch("http://www.admpub.com/")
+	content, err := Fetch(&collector.Base{}, "http://www.admpub.com/")
 	defer CloseServer()
 	if err != nil {
 		panic(err)
