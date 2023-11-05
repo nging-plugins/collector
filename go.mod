@@ -10,7 +10,7 @@ replace github.com/nging-plugins/dbmanager => ../dbmanager
 
 require (
 	github.com/admpub/color v1.8.1
-	github.com/admpub/cr v0.0.2
+	github.com/admpub/cr v0.0.3
 	github.com/admpub/go-download/v2 v2.1.13
 	github.com/admpub/gopiper v1.0.4
 	github.com/admpub/log v1.3.6
@@ -18,7 +18,7 @@ require (
 	github.com/admpub/nging/v5 v5.0.0
 	github.com/admpub/pp v0.0.7
 	github.com/admpub/regexp2 v1.1.7
-	github.com/chromedp/cdproto v0.0.0-20231025043423-5615e204d422
+	github.com/chromedp/cdproto v0.0.0-20231101223124-24f5925b5980
 	github.com/chromedp/chromedp v0.9.3
 	github.com/nging-plugins/dbmanager v1.4.21
 	github.com/stretchr/testify v1.8.4
@@ -103,7 +103,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
-	github.com/gobwas/ws v1.3.0 // indirect
+	github.com/gobwas/ws v1.3.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
@@ -168,7 +168,7 @@ require (
 	golang.org/x/image v0.13.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/sys v0.14.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
