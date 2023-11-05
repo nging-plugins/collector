@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/admpub/log"
 	"github.com/webx-top/echo"
 
 	"github.com/admpub/nging/v5/application/library/notice"
@@ -77,24 +78,11 @@ func (c *Rules) Collect(debug bool, noticeSender sender.Notice, progress *notice
 		engine = `standard`
 	}
 	var browser collector.Browser
-	browserService, ok := collector.Services.Load(engine)
-	if ok {
-		browser = browserService.(collector.Browser)
-	} else {
-		browser, ok = collector.Browsers[engine]
-		if !ok {
-			return nil, fmt.Errorf(`Unsupported: %s`, engine)
-		}
-		if err := browser.Start(echo.Store{
-			`timeout`: timeout,
-			`proxy`:   c.Rule.Proxy,
-			`delay`:   c.Rule.Waits,
-		}); err != nil {
-			return nil, err
-		}
-		collector.Services.Store(engine, browser)
+	browserStartParams := echo.Store{
+		`timeout`: timeout,
+		`proxy`:   c.Rule.Proxy,
+		`delay`:   c.Rule.Waits,
 	}
-	browseData := make(echo.Store)
 	if len(c.Rule.Cookie) > 0 {
 		rows := strings.Split(c.Rule.Cookie, "\n")
 		items := make([]string, 0, len(rows))
@@ -113,7 +101,7 @@ func (c *Rules) Collect(debug bool, noticeSender sender.Notice, progress *notice
 		header.Add("Cookie", strings.Join(items, ` `))
 		request := http.Request{Header: header}
 		cookies := request.Cookies()
-		browseData.Set(`cookie`, cookies)
+		browserStartParams.Set(`cookie`, cookies)
 	}
 	if len(c.Rule.Header) > 0 {
 		headers := map[string]string{}
@@ -133,8 +121,16 @@ func (c *Rules) Collect(debug bool, noticeSender sender.Notice, progress *notice
 			parts[1] = strings.TrimSpace(parts[1])
 			headers[parts[0]] = parts[1]
 		}
-		browseData.Set(`header`, headers)
+		browserStartParams.Set(`header`, headers)
 	}
+	browser, ok := collector.Browsers[engine]
+	if !ok {
+		return nil, fmt.Errorf(`Unsupported: %s`, engine)
+	}
+	if err := browser.Start(browserStartParams); err != nil {
+		return nil, err
+	}
+	browseData := make(echo.Store)
 	fetch = func(pageURL string, charset string) ([]byte, bool, error) {
 		browseData.Set(`charset`, charset)
 		body, err := browser.Do(pageURL, browseData)
@@ -151,7 +147,12 @@ func (c *Rules) Collect(debug bool, noticeSender sender.Notice, progress *notice
 			extraPageRule.Charset = c.Rule.Charset
 		}
 	}
-	// 	err = browser.Close()
+	defer func() {
+		err = browser.Close()
+		if err != nil {
+			log.Error(err.Error())
+		}
+	}()
 	//入口页面
 	topRecv := &Recv{
 		LevelIndex: -1, //子页面层级计数，用来遍历c.Extra中的元素(作为Extra切片下标)，-1表示入口页面

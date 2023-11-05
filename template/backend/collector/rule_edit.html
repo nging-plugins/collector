@@ -86,7 +86,7 @@ textarea.form-control.url-tmpl{height:160px}
                     <label class="col-sm-2 control-label">{{"间歇时间"|$.T}}</label>
                     <div class="col-sm-4">
                         <span class="input-group">
-                        <input class="form-control" name="waits" value="{{$data.Waits}}" placeholder="{{"间歇时间范围，例如5-10"|$.T}}" pattern="[\d]+(-[\d]+)?" />
+                        <input class="form-control" name="waits" value="{{$data.Waits|Default `1-5`}}" placeholder="{{"间歇时间范围，例如5-10"|$.T}}" pattern="[\d]+(-[\d]+)?" />
                         <span class="input-group-addon">{{"秒"|$.T}}</span>
                         </span>
                         <div class="help-block">{{"例如5-10秒。即访问页面后，随机暂停的秒数"|$.T}}</div>

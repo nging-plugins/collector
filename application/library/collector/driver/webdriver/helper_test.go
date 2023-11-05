@@ -29,7 +29,7 @@ import (
 var _ = assert.Equal
 
 func TestFectch(t *testing.T) {
-	service, err := StartService(ChromeDriverDefaultPath(), 4444)
+	service, err := StartChromeServer(ChromeDriverDefaultPath(), 4444)
 	if err != nil {
 		panic(err)
 	}

@@ -59,6 +59,9 @@ func CloseServer() error {
 }
 
 func InitServer() error {
+	if defaultFetcher != nil {
+		return nil
+	}
 	fetcher, err := phantomjs.NewFetcher(DefaultPort, nil)
 	if err != nil {
 		return err
