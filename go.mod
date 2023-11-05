@@ -10,7 +10,7 @@ replace github.com/nging-plugins/dbmanager => ../dbmanager
 
 require (
 	github.com/admpub/color v1.8.1
-	github.com/admpub/cr v0.0.4
+	github.com/admpub/cr v0.0.5
 	github.com/admpub/go-download/v2 v2.1.13
 	github.com/admpub/gopiper v1.0.4
 	github.com/admpub/log v1.3.6
