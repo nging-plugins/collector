@@ -46,17 +46,17 @@ func History(c echo.Context) error {
 	}, cond))
 	ret := handler.Err(c, err)
 	c.Set(`listData`, m.Objects())
-	var postions []dbschema.NgingCollectorHistory
+	var positions []dbschema.NgingCollectorHistory
 	if pageID > 0 {
 		mw := func(r db.Result) db.Result {
 			return r.Select(`page_id`, `title`, `parent_id`, `id`)
 		}
 		m.Get(mw, `page_id`, pageID)
 		if m.ParentId > 0 {
-			postions, _ = m.Positions(mw, m.ParentId)
+			positions, _ = m.Positions(mw, m.ParentId)
 		}
 	}
-	c.Set(`postions`, postions)
+	c.Set(`positions`, positions)
 	return c.Render(`collector/history`, ret)
 }
 
