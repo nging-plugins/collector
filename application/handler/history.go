@@ -48,9 +48,12 @@ func History(c echo.Context) error {
 	c.Set(`listData`, m.Objects())
 	var postions []dbschema.NgingCollectorHistory
 	if pageID > 0 {
-		m.Get(nil, `page_id`, pageID)
+		mw := func(r db.Result) db.Result {
+			return r.Select(`page_id`, `title`, `parent_id`, `id`)
+		}
+		m.Get(mw, `page_id`, pageID)
 		if m.ParentId > 0 {
-			postions, _ = m.Positions(nil, m.ParentId)
+			postions, _ = m.Positions(mw, m.ParentId)
 		}
 	}
 	c.Set(`postions`, postions)
