@@ -28,6 +28,7 @@ import (
 	"github.com/admpub/nging/v5/application/handler"
 	"github.com/admpub/nging/v5/application/library/common"
 
+	"github.com/nging-plugins/collector/application/dbschema"
 	"github.com/nging-plugins/collector/application/model"
 )
 
@@ -45,6 +46,14 @@ func History(c echo.Context) error {
 	}, cond))
 	ret := handler.Err(c, err)
 	c.Set(`listData`, m.Objects())
+	var postions []dbschema.NgingCollectorHistory
+	if pageID > 0 {
+		m.Get(nil, `page_id`, pageID)
+		if m.ParentId > 0 {
+			postions, _ = m.Positions(nil, m.ParentId)
+		}
+	}
+	c.Set(`postions`, postions)
 	return c.Render(`collector/history`, ret)
 }
 

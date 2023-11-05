@@ -23,7 +23,7 @@ require (
 	github.com/nging-plugins/dbmanager v1.4.21
 	github.com/stretchr/testify v1.8.4
 	github.com/tebeka/selenium v0.9.9
-	github.com/webx-top/com v1.1.3
+	github.com/webx-top/com v1.2.0
 	github.com/webx-top/db v1.27.1
 	github.com/webx-top/echo v2.39.8+incompatible
 )
