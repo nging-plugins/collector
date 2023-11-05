@@ -47,7 +47,15 @@ func History(c echo.Context) error {
 	ret := handler.Err(c, err)
 	c.Set(`listData`, m.Objects())
 	var positions []dbschema.NgingCollectorHistory
+	var pageRule *dbschema.NgingCollectorPage
 	if pageID > 0 {
+		pageM := model.NewCollectorPage(c)
+		pageM.Get(func(r db.Result) db.Result {
+			return r.Select(`id`, `type`, `name`, `content_type`)
+		}, `id`, pageID)
+		if pageM.Id > 0 {
+			pageRule = pageM.NgingCollectorPage
+		}
 		mw := func(r db.Result) db.Result {
 			return r.Select(`page_id`, `title`, `parent_id`, `id`)
 		}
@@ -57,6 +65,7 @@ func History(c echo.Context) error {
 		}
 	}
 	c.Set(`positions`, positions)
+	c.Set(`pageRule`, pageRule)
 	return c.Render(`collector/history`, ret)
 }
 
