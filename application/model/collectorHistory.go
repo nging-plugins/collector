@@ -73,7 +73,7 @@ START:
 	if err != nil {
 		return rows, err
 	}
-	rows = append(rows, *this.NgingCollectorHistory)
+	rows = append(rows, *m)
 	if m.ParentId > 0 {
 		parentID = m.ParentId
 		goto START
