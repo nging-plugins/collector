@@ -12,12 +12,10 @@ require (
 	github.com/admpub/color v1.8.1
 	github.com/admpub/cr v0.0.2
 	github.com/admpub/go-download/v2 v2.1.13
-	github.com/admpub/go-phantomjs-fetcher v0.0.0-20180924162325-bb2ae1648e33
 	github.com/admpub/gopiper v1.0.4
 	github.com/admpub/log v1.3.6
 	github.com/admpub/marmot v0.0.0-20200702042226-2170d9ff59f5
 	github.com/admpub/nging/v5 v5.0.0
-	github.com/admpub/phantomjs v0.0.0-20180924162111-8a5af756140e
 	github.com/admpub/pp v0.0.7
 	github.com/admpub/regexp2 v1.1.7
 	github.com/chromedp/cdproto v0.0.0-20231025043423-5615e204d422
