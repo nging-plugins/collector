@@ -52,8 +52,8 @@ func History(c echo.Context) error {
 			return r.Select(`page_id`, `title`, `parent_id`, `id`)
 		}
 		m.Get(mw, `page_id`, pageID)
-		if m.ParentId > 0 {
-			positions, _ = m.Positions(mw, m.ParentId)
+		if m.Id > 0 {
+			positions, _ = m.Positions(mw, m.Id)
 		}
 	}
 	c.Set(`positions`, positions)
