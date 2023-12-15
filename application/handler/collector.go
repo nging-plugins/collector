@@ -474,13 +474,13 @@ func RuleCollect(c echo.Context) error {
 					noticeSender(mockCtx.T(`[规则:%d] 采集出错`, id)+`: `+err.Error(), 0)
 				}
 			} else {
-				if progress.Total < 0 {
-					progress.Total = 0
+				total := progress.Total()
+				if total < 0 {
+					total = 0
 				}
-				progress.Percent = 100
-				progress.Finish = progress.Total
-				progress.Complete = true
-				noticeSender(mockCtx.T(`[规则:%d] 采集完毕(%d/%d)`, id, progress.Finish, progress.Total), 1, progress)
+				finish := total
+				progress.SetPercent(100).SetComplete()
+				noticeSender(mockCtx.T(`[规则:%d] 采集完毕(%d/%d)`, id, finish, total), 1, progress)
 			}
 		}, mockCtx)
 		if err != nil {
