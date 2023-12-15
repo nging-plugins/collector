@@ -462,20 +462,7 @@ func RuleCollect(c echo.Context) error {
 			if user != nil {
 				notice.OpenMessage(user.Username, `collector`)
 				defer notice.CloseMessage(user.Username, `collector`)
-				noticeSender = func(message interface{}, statusCode int, progs ...*notice.Progress) error {
-					msg := notice.NewMessageWithValue(
-						`collector`,
-						``,
-						message,
-						statusCode,
-					).SetMode(`element`).SetID(id)
-					if len(progs) > 0 && progs[0] != nil {
-						progress = progs[0]
-					}
-					msg.SetProgress(progress).CalcPercent().SetClientID(clientID)
-					sendErr := notice.Send(user.Username, msg)
-					return sendErr
-				}
+				noticeSender = notice.MakeNoticer(progress, `collector`, `element`, id, clientID, user.Username)
 			} else {
 				noticeSender = sender.Default
 			}
