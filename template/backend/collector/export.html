@@ -7,7 +7,7 @@
 {{Block "main"}}
 <div class="row">
 	<div class="col-md-12">
-		<div class="block-flat">
+		<div class="block-flat no-padding">
 			<div class="header">
 				<div class="pull-right" style="margin-left:10px">
 					<form class="form-horizontal" action="" id="search-form" method="GET">
@@ -15,10 +15,10 @@
 							<span class="input-group-addon">{{"分组"|$.T}}</span>
 							<select name="groupId" class="form-control" id="groupId" onchange="$('#search-form').submit()">
 								<option value="0"> - {{"不限"|$.T}} - </option>
-								{{$groupId := $.Stored.groupId}} 
-								{{range $k, $v := $.Stored.groupList}}
+								{{- $groupId := $.Stored.groupId -}} 
+								{{- range $k, $v := $.Stored.groupList -}}
 								<option value="{{$v.Id}}" {{if eq $groupId $v.Id}} selected{{end}}>{{$v.Name}}</option>
-								{{end}}
+								{{- end -}}
 							</select>
 						</div>
 					</form>

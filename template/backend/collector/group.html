@@ -7,7 +7,7 @@
 {{Block "main"}}
 <div class="row">
 	<div class="col-md-12">
-		<div class="block-flat">
+		<div class="block-flat no-padding">
 			<div class="header">
 				<div class="pull-right" style="margin-left:10px">
 					<form class="form-horizontal" action="" id="search-form" method="GET">
@@ -16,8 +16,8 @@
 							<select name="type" class="form-control" id="type" onchange="$('#search-form').submit()">
 								<option value="0"> - {{"不限"|$.T}} - </option>
 								{{$type := $.Form "type"}} 
-								<option value="page" {{if eq $type "page"}} selected{{end}}>{{"页面规则组"|$.T}}</option>
-								<option value="export" {{if eq $type "export"}} selected{{end}}>{{"导出规则组"|$.T}}</option>
+								<option value="page" {{if eq $type `page`}} selected{{end}}>{{"页面规则组"|$.T}}</option>
+								<option value="export" {{if eq $type `export`}} selected{{end}}>{{"导出规则组"|$.T}}</option>
 							</select>
 						</div>
 					</form>
