@@ -19,7 +19,7 @@
 package sender
 
 import (
-	"github.com/admpub/nging/v5/application/library/notice"
+	"github.com/coscms/webcore/library/notice"
 )
 
 type Notice = notice.Noticer

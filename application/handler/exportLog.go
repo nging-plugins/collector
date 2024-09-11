@@ -24,10 +24,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coscms/webcore/library/backend"
+	"github.com/coscms/webcore/library/common"
 	"github.com/webx-top/db"
 	"github.com/webx-top/echo"
-
-	"github.com/admpub/nging/v5/application/handler"
 
 	"github.com/nging-plugins/collector/application/dbschema"
 )
@@ -36,7 +36,7 @@ func ExportLog(ctx echo.Context) error {
 	exportID := ctx.Formx(`exportId`).Uint()
 	totalRows := ctx.Formx(`rows`).Int()
 	m := dbschema.NewNgingCollectorExportLog(ctx)
-	page, size, totalRows, p := handler.PagingWithPagination(ctx)
+	page, size, totalRows, p := common.PagingWithPagination(ctx)
 	cond := db.Cond{}
 	var export *dbschema.NgingCollectorExport
 	var err error
@@ -61,7 +61,7 @@ func ExportLog(ctx echo.Context) error {
 		export = dbschema.NewNgingCollectorExport(ctx)
 	}
 	ctx.Set(`export`, export)
-	ret := handler.Err(ctx, err)
+	ret := common.Err(ctx, err)
 	ctx.Set(`activeURL`, `/collector/export`)
 	return ctx.Render(`collector/export_log`, ret)
 }
@@ -75,7 +75,7 @@ func renderLogViewData(ctx echo.Context, m *dbschema.NgingCollectorExportLog, er
 		err = export.Get(nil, `id`, m.ExportId)
 	}
 	ctx.Set(`export`, export)
-	return ctx.Render(`collector/export_log_view`, handler.Err(ctx, err))
+	return ctx.Render(`collector/export_log_view`, common.Err(ctx, err))
 }
 
 func ExportLogView(ctx echo.Context) error {
@@ -83,8 +83,8 @@ func ExportLogView(ctx echo.Context) error {
 	m := dbschema.NewNgingCollectorExportLog(ctx)
 	err := m.Get(nil, `id`, id)
 	if err != nil {
-		handler.SendFail(ctx, err.Error())
-		return ctx.Redirect(handler.URLFor(`/collector/export_log`))
+		common.SendFail(ctx, err.Error())
+		return ctx.Redirect(backend.URLFor(`/collector/export_log`))
 	}
 	return renderLogViewData(ctx, m, err)
 }
@@ -103,7 +103,7 @@ func ExportLogDelete(ctx echo.Context) error {
 	} else {
 		ago := ctx.Form(`ago`)
 		if len(ago) < 2 {
-			handler.SendFail(ctx, ctx.T(`missing param`))
+			common.SendFail(ctx, ctx.T(`missing param`))
 			goto END
 		}
 
@@ -111,7 +111,7 @@ func ExportLogDelete(ctx echo.Context) error {
 		case 'd': //删除几天前的。例如：7d
 			n, err = strconv.Atoi(strings.TrimSuffix(ago, `d`))
 			if err != nil {
-				handler.SendFail(ctx, err.Error()+`:`+ago)
+				common.SendFail(ctx, err.Error()+`:`+ago)
 				goto END
 			}
 
@@ -119,7 +119,7 @@ func ExportLogDelete(ctx echo.Context) error {
 		case 'm': //删除几个月前的。例如：1m
 			n, err = strconv.Atoi(strings.TrimSuffix(ago, `m`))
 			if err != nil {
-				handler.SendFail(ctx, err.Error()+`:`+ago)
+				common.SendFail(ctx, err.Error()+`:`+ago)
 				goto END
 			}
 
@@ -127,13 +127,13 @@ func ExportLogDelete(ctx echo.Context) error {
 		case 'y': //删除几年前的。例如：1y
 			n, err = strconv.Atoi(strings.TrimSuffix(ago, `y`))
 			if err != nil {
-				handler.SendFail(ctx, err.Error()+`:`+ago)
+				common.SendFail(ctx, err.Error()+`:`+ago)
 				goto END
 			}
 
 			cond = db.Cond{`created`: db.Lt(time.Now().AddDate(-n, 0, 0).Unix())}
 		default:
-			handler.SendFail(ctx, ctx.T(`invalid param`))
+			common.SendFail(ctx, ctx.T(`invalid param`))
 			goto END
 		}
 		if exportId > 0 {
@@ -142,11 +142,11 @@ func ExportLogDelete(ctx echo.Context) error {
 	}
 	err = m.Delete(nil, cond)
 	if err == nil {
-		handler.SendOk(ctx, ctx.T(`操作成功`))
+		common.SendOk(ctx, ctx.T(`操作成功`))
 	} else {
-		handler.SendFail(ctx, err.Error())
+		common.SendFail(ctx, err.Error())
 	}
 
 END:
-	return ctx.Redirect(handler.URLFor(`/collector/export_log?exportId=`) + fmt.Sprint(exportId))
+	return ctx.Redirect(backend.URLFor(`/collector/export_log?exportId=`) + fmt.Sprint(exportId))
 }

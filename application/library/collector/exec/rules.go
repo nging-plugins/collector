@@ -27,7 +27,7 @@ import (
 	"github.com/admpub/log"
 	"github.com/webx-top/echo"
 
-	"github.com/admpub/nging/v5/application/library/notice"
+	"github.com/coscms/webcore/library/notice"
 
 	"github.com/nging-plugins/collector/application/dbschema"
 	"github.com/nging-plugins/collector/application/library/collector"

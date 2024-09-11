@@ -45,9 +45,9 @@ import (
 	"github.com/webx-top/echo/middleware/tplfunc"
 	"github.com/webx-top/echo/param"
 
-	"github.com/admpub/nging/v5/application/library/charset"
-	"github.com/admpub/nging/v5/application/library/common"
-	"github.com/admpub/nging/v5/application/library/notice"
+	"github.com/coscms/webcore/library/charset"
+	"github.com/coscms/webcore/library/common"
+	"github.com/coscms/webcore/library/notice"
 
 	"github.com/nging-plugins/collector/application/dbschema"
 	_ "github.com/nging-plugins/collector/application/library/collector/driver/chrome"

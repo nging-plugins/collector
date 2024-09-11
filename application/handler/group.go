@@ -19,10 +19,10 @@
 package handler
 
 import (
+	"github.com/coscms/webcore/library/backend"
+	"github.com/coscms/webcore/library/common"
 	"github.com/webx-top/db"
 	"github.com/webx-top/echo"
-
-	"github.com/admpub/nging/v5/application/handler"
 
 	"github.com/nging-plugins/collector/application/model"
 )
@@ -30,13 +30,13 @@ import (
 func Group(ctx echo.Context) error {
 	m := model.NewCollectorGroup(ctx)
 	t := ctx.Form(`type`)
-	user := handler.User(ctx)
+	user := backend.User(ctx)
 	cond := []db.Compound{db.Cond{`uid`: user.Id}}
 	if len(t) > 0 {
 		cond = append(cond, db.Cond{`type`: t})
 	}
-	_, err := handler.PagingWithListerCond(ctx, m, db.And(cond...))
-	ret := handler.Err(ctx, err)
+	_, err := common.PagingWithListerCond(ctx, m, db.And(cond...))
+	ret := common.Err(ctx, err)
 	ctx.Set(`listData`, m.Objects())
 	return ctx.Render(`collector/group`, ret)
 }
@@ -50,32 +50,32 @@ func GroupAdd(ctx echo.Context) error {
 			if len(m.Name) == 0 {
 				err = ctx.E(`分组名称不能为空`)
 			} else {
-				user := handler.User(ctx)
+				user := backend.User(ctx)
 				m.Uid = user.Id
 				_, err = m.Insert()
 			}
 		}
 		if err == nil {
-			handler.SendOk(ctx, ctx.T(`操作成功`))
-			return ctx.Redirect(handler.URLFor(`/collector/group`))
+			common.SendOk(ctx, ctx.T(`操作成功`))
+			return ctx.Redirect(backend.URLFor(`/collector/group`))
 		}
 	}
 	ctx.Set(`activeURL`, `/collector/group`)
-	return ctx.Render(`collector/group_edit`, handler.Err(ctx, err))
+	return ctx.Render(`collector/group_edit`, common.Err(ctx, err))
 }
 
 func GroupEdit(ctx echo.Context) error {
 	id := ctx.Formx(`id`).Uint()
 	m := model.NewCollectorGroup(ctx)
-	user := handler.User(ctx)
+	user := backend.User(ctx)
 	err := m.Get(nil, `id`, id)
 	if err != nil {
-		handler.SendFail(ctx, err.Error())
-		return ctx.Redirect(handler.URLFor(`/collector/group`))
+		common.SendFail(ctx, err.Error())
+		return ctx.Redirect(backend.URLFor(`/collector/group`))
 	}
 	if m.Id < 1 || user.Id != m.Uid {
-		handler.SendFail(ctx, ctx.T(`分组不存在`))
-		return ctx.Redirect(handler.URLFor(`/collector/group`))
+		common.SendFail(ctx, ctx.T(`分组不存在`))
+		return ctx.Redirect(backend.URLFor(`/collector/group`))
 	}
 	if ctx.IsPost() {
 		err = ctx.MustBind(m.NgingCollectorGroup)
@@ -89,27 +89,27 @@ func GroupEdit(ctx echo.Context) error {
 			}
 		}
 		if err == nil {
-			handler.SendOk(ctx, ctx.T(`修改成功`))
-			return ctx.Redirect(handler.URLFor(`/collector/group`))
+			common.SendOk(ctx, ctx.T(`修改成功`))
+			return ctx.Redirect(backend.URLFor(`/collector/group`))
 		}
 	}
 	echo.StructToForm(ctx, m.NgingCollectorGroup, ``, echo.LowerCaseFirstLetter)
 	ctx.Set(`activeURL`, `/collector/group`)
-	return ctx.Render(`collector/group_edit`, handler.Err(ctx, err))
+	return ctx.Render(`collector/group_edit`, common.Err(ctx, err))
 }
 
 func GroupDelete(ctx echo.Context) error {
 	id := ctx.Formx(`id`).Uint()
 	m := model.NewCollectorGroup(ctx)
-	user := handler.User(ctx)
+	user := backend.User(ctx)
 	err := m.Delete(nil, db.And(
 		db.Cond{`id`: id},
 		db.Cond{`uid`: user.Id},
 	))
 	if err == nil {
-		handler.SendOk(ctx, ctx.T(`操作成功`))
+		common.SendOk(ctx, ctx.T(`操作成功`))
 	} else {
-		handler.SendFail(ctx, err.Error())
+		common.SendFail(ctx, err.Error())
 	}
-	return ctx.Redirect(handler.URLFor(`/collector/group`))
+	return ctx.Redirect(backend.URLFor(`/collector/group`))
 }

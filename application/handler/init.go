@@ -19,8 +19,8 @@
 package handler
 
 import (
-	"github.com/admpub/nging/v5/application/handler"
-	"github.com/admpub/nging/v5/application/library/route"
+	"github.com/coscms/webcore/library/route"
+	routeRegistry "github.com/coscms/webcore/registry/route"
 	"github.com/webx-top/echo"
 )
 
@@ -29,26 +29,26 @@ func RegisterRoute(r *route.Collection) {
 }
 
 func registerRoute(g echo.RouteRegister) {
-	metaHandler := handler.IRegister().MetaHandler
-	g.Route(`GET,POST`, `/export`, metaHandler(echo.H{`name`: `导出管理`}, Export))
-	g.Route(`GET,POST`, `/export_log`, metaHandler(echo.H{`name`: `日子列表`}, ExportLog))
-	g.Route(`GET,POST`, `/export_log_view/:id`, metaHandler(echo.H{`name`: `日志详情`}, ExportLogView))
-	g.Route(`GET,POST`, `/export_log_delete`, metaHandler(echo.H{`name`: `删除日志`}, ExportLogDelete))
-	g.Route(`GET,POST`, `/export_add`, metaHandler(echo.H{`name`: `添加导出规则`}, ExportAdd))
-	g.Route(`GET,POST`, `/export_edit`, metaHandler(echo.H{`name`: `修改导出规则`}, ExportEdit))
-	g.Route(`GET,POST`, `/export_edit_status`, metaHandler(echo.H{`name`: `修改导出规则`}, ExportEditStatus))
-	g.Route(`GET,POST`, `/export_delete`, metaHandler(echo.H{`name`: `删除导出规则`}, ExportDelete))
-	g.Route(`GET,POST`, `/history`, metaHandler(echo.H{`name`: `历史记录`}, History))
-	g.Route(`GET,POST`, `/history_view`, metaHandler(echo.H{`name`: `查看历史内容`}, HistoryView))
-	g.Route(`GET,POST`, `/history_delete`, metaHandler(echo.H{`name`: `删除历史记录`}, HistoryDelete))
-	g.Route(`GET,POST`, `/rule`, metaHandler(echo.H{`name`: `规则列表`}, Rule))
-	g.Route(`GET,POST`, `/rule_add`, metaHandler(echo.H{`name`: `添加规则`}, RuleAdd))
-	g.Route(`GET,POST`, `/rule_edit`, metaHandler(echo.H{`name`: `修改规则`}, RuleEdit))
-	g.Route(`GET,POST`, `/rule_delete`, metaHandler(echo.H{`name`: `删除规则`}, RuleDelete))
-	g.Route(`GET,POST`, `/rule_collect`, metaHandler(echo.H{`name`: `采集`}, RuleCollect))
-	g.Route(`GET,POST`, `/group`, metaHandler(echo.H{`name`: `任务分组列表`}, Group))
-	g.Route(`GET,POST`, `/group_add`, metaHandler(echo.H{`name`: `添加分组`}, GroupAdd))
-	g.Route(`GET,POST`, `/group_edit`, metaHandler(echo.H{`name`: `修改分组`}, GroupEdit))
-	g.Route(`GET,POST`, `/group_delete`, metaHandler(echo.H{`name`: `删除分组`}, GroupDelete))
-	g.Route(`GET,POST`, `/regexp_test`, metaHandler(echo.H{`name`: `测试正则表达式`}, RegexpTest))
+	metaHandler := routeRegistry.MetaHandler
+	g.Route(`GET,POST`, `/export`, metaHandler(Export, echo.H{`name`: `导出管理`}))
+	g.Route(`GET,POST`, `/export_log`, metaHandler(ExportLog, echo.H{`name`: `日子列表`}))
+	g.Route(`GET,POST`, `/export_log_view/:id`, metaHandler(ExportLogView, echo.H{`name`: `日志详情`}))
+	g.Route(`GET,POST`, `/export_log_delete`, metaHandler(ExportLogDelete, echo.H{`name`: `删除日志`}))
+	g.Route(`GET,POST`, `/export_add`, metaHandler(ExportAdd, echo.H{`name`: `添加导出规则`}))
+	g.Route(`GET,POST`, `/export_edit`, metaHandler(ExportEdit, echo.H{`name`: `修改导出规则`}))
+	g.Route(`GET,POST`, `/export_edit_status`, metaHandler(ExportEditStatus, echo.H{`name`: `修改导出规则`}))
+	g.Route(`GET,POST`, `/export_delete`, metaHandler(ExportDelete, echo.H{`name`: `删除导出规则`}))
+	g.Route(`GET,POST`, `/history`, metaHandler(History, echo.H{`name`: `历史记录`}))
+	g.Route(`GET,POST`, `/history_view`, metaHandler(HistoryView, echo.H{`name`: `查看历史内容`}))
+	g.Route(`GET,POST`, `/history_delete`, metaHandler(HistoryDelete, echo.H{`name`: `删除历史记录`}))
+	g.Route(`GET,POST`, `/rule`, metaHandler(Rule, echo.H{`name`: `规则列表`}))
+	g.Route(`GET,POST`, `/rule_add`, metaHandler(RuleAdd, echo.H{`name`: `添加规则`}))
+	g.Route(`GET,POST`, `/rule_edit`, metaHandler(RuleEdit, echo.H{`name`: `修改规则`}))
+	g.Route(`GET,POST`, `/rule_delete`, metaHandler(RuleDelete, echo.H{`name`: `删除规则`}))
+	g.Route(`GET,POST`, `/rule_collect`, metaHandler(RuleCollect, echo.H{`name`: `采集`}))
+	g.Route(`GET,POST`, `/group`, metaHandler(Group, echo.H{`name`: `任务分组列表`}))
+	g.Route(`GET,POST`, `/group_add`, metaHandler(GroupAdd, echo.H{`name`: `添加分组`}))
+	g.Route(`GET,POST`, `/group_edit`, metaHandler(GroupEdit, echo.H{`name`: `修改分组`}))
+	g.Route(`GET,POST`, `/group_delete`, metaHandler(GroupDelete, echo.H{`name`: `删除分组`}))
+	g.Route(`GET,POST`, `/regexp_test`, metaHandler(RegexpTest, echo.H{`name`: `测试正则表达式`}))
 }

@@ -26,8 +26,9 @@ import (
 	"github.com/webx-top/echo"
 	"github.com/webx-top/echo/defaults"
 
-	"github.com/admpub/nging/v5/application/handler"
-	"github.com/admpub/nging/v5/application/library/notice"
+	"github.com/coscms/webcore/library/backend"
+	"github.com/coscms/webcore/library/common"
+	"github.com/coscms/webcore/library/notice"
 
 	"github.com/nging-plugins/collector/application/dbschema"
 	"github.com/nging-plugins/collector/application/library/collector"
@@ -49,11 +50,11 @@ func Rule(c echo.Context) error {
 		cond.AddKV(`name`, db.Like(`%`+q+`%`))
 	}
 	var rowAndGroup []*model.CollectorPageAndGroup
-	page, size, totalRows, p := handler.PagingWithPagination(c)
+	page, size, totalRows, p := common.PagingWithPagination(c)
 	cnt, err := m.List(&rowAndGroup, func(r db.Result) db.Result {
 		return r.OrderBy(`-id`)
 	}, page, size, cond.And())
-	ret := handler.Err(c, err)
+	ret := common.Err(c, err)
 	if totalRows <= 0 {
 		totalRows = int(cnt())
 		p.SetRows(totalRows)
@@ -69,7 +70,7 @@ func Rule(c echo.Context) error {
 }
 
 func RuleAdd(c echo.Context) error {
-	user := handler.User(c)
+	user := backend.User(c)
 	var err error
 	pageM := model.NewCollectorPage(c)
 	if c.IsPost() {
@@ -185,11 +186,11 @@ func RuleAdd(c echo.Context) error {
 	c.Set(`dataTypes`, DataTypes.Slice())
 	c.Set(`browserList`, collector.BrowserKeys())
 	c.Set(`allFilter`, gopiper.AllFilter())
-	return c.Render(`collector/rule_edit`, handler.Err(c, err))
+	return c.Render(`collector/rule_edit`, common.Err(c, err))
 }
 
 func RuleEdit(c echo.Context) error {
-	user := handler.User(c)
+	user := backend.User(c)
 	id := c.Formx(`id`).Uint()
 	pageM := model.NewCollectorPage(c)
 	err := pageM.Get(nil, `id`, id)
@@ -368,8 +369,8 @@ func RuleEdit(c echo.Context) error {
 	}
 
 	if err != nil {
-		handler.SendFail(c, err.Error())
-		return c.Redirect(handler.URLFor(`/collector/rule`))
+		common.SendFail(c, err.Error())
+		return c.Redirect(backend.URLFor(`/collector/rule`))
 	}
 
 	mg := model.NewCollectorGroup(c)
@@ -381,7 +382,7 @@ func RuleEdit(c echo.Context) error {
 	c.Set(`dataTypes`, DataTypes.Slice())
 	c.Set(`browserList`, collector.BrowserKeys())
 	c.Set(`allFilter`, gopiper.AllFilter())
-	return c.Render(`collector/rule_edit`, handler.Err(c, err))
+	return c.Render(`collector/rule_edit`, common.Err(c, err))
 }
 
 func RuleDelete(c echo.Context) error {
@@ -395,8 +396,8 @@ func RuleDelete(c echo.Context) error {
 		_, err = m.ListByOffset(nil, nil, 0, -1, db.Cond{`root_id`: id})
 		if err != nil {
 			c.Rollback()
-			handler.SendFail(c, err.Error())
-			return c.Redirect(handler.URLFor(`/collector/rule`))
+			common.SendFail(c, err.Error())
+			return c.Redirect(backend.URLFor(`/collector/rule`))
 		}
 		ids := []uint{id}
 		for _, row := range m.Objects() {
@@ -408,16 +409,16 @@ func RuleDelete(c echo.Context) error {
 		}
 		if err != nil {
 			c.Rollback()
-			handler.SendFail(c, err.Error())
-			return c.Redirect(handler.URLFor(`/collector/rule`))
+			common.SendFail(c, err.Error())
+			return c.Redirect(backend.URLFor(`/collector/rule`))
 		}
-		handler.SendOk(c, c.T(`操作成功`))
+		common.SendOk(c, c.T(`操作成功`))
 	} else {
-		handler.SendFail(c, err.Error())
+		common.SendFail(c, err.Error())
 	}
 
 	c.End(err == nil)
-	return c.Redirect(handler.URLFor(`/collector/rule`))
+	return c.Redirect(backend.URLFor(`/collector/rule`))
 }
 
 func RuleCollect(c echo.Context) error {
@@ -436,7 +437,7 @@ func RuleCollect(c echo.Context) error {
 		return err
 	}
 	collected.SetExportFn(export.Export)
-	user := handler.User(c)
+	user := backend.User(c)
 	if c.Format() == `json` {
 		data := c.Data()
 		op := c.Form(`op`)
@@ -496,5 +497,5 @@ func RuleCollect(c echo.Context) error {
 	c.Set(`data`, m)
 	c.Set(`result`, result)
 	c.Set(`activeURL`, `/collector/rule`)
-	return c.Render(`collector/rule_collect`, handler.Err(c, err))
+	return c.Render(`collector/rule_collect`, common.Err(c, err))
 }

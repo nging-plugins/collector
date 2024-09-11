@@ -22,11 +22,11 @@ import (
 	"strings"
 
 	"github.com/admpub/gopiper"
+	"github.com/coscms/webcore/library/backend"
+	"github.com/coscms/webcore/library/common"
 	"github.com/webx-top/com"
 	"github.com/webx-top/db"
 	"github.com/webx-top/echo"
-
-	"github.com/admpub/nging/v5/application/handler"
 
 	"github.com/nging-plugins/collector/application/dbschema"
 	"github.com/nging-plugins/collector/application/library/collector/export"
@@ -51,10 +51,10 @@ func Export(c echo.Context) error {
 	if len(q) > 0 {
 		cond.AddKV(`name`, db.Like(`%`+q+`%`))
 	}
-	_, err := handler.PagingWithLister(c, handler.NewLister(m, nil, func(r db.Result) db.Result {
+	_, err := common.PagingWithLister(c, common.NewLister(m, nil, func(r db.Result) db.Result {
 		return r.OrderBy(`-id`)
 	}, cond.And()))
-	ret := handler.Err(c, err)
+	ret := common.Err(c, err)
 	rows := m.Objects()
 	gIds := []uint{}
 	rowAndGroup := make([]*model.CollectorExportAndGroup, len(rows))
@@ -215,8 +215,8 @@ func ExportAdd(ctx echo.Context) error {
 			_, err = m.Add()
 		}
 		if err == nil {
-			handler.SendOk(ctx, ctx.T(`操作成功`))
-			return ctx.Redirect(handler.URLFor(`/collector/export`))
+			common.SendOk(ctx, ctx.T(`操作成功`))
+			return ctx.Redirect(backend.URLFor(`/collector/export`))
 		}
 	} else {
 		id := ctx.Formx(`copyId`).Uint()
@@ -246,7 +246,7 @@ func ExportAdd(ctx echo.Context) error {
 	}
 	ctx.Set(`fieldList`, mappings)
 	setExportFormData(ctx)
-	return ctx.Render(`collector/export_edit`, handler.Err(ctx, err))
+	return ctx.Render(`collector/export_edit`, common.Err(ctx, err))
 }
 
 func ExportEdit(ctx echo.Context) error {
@@ -256,11 +256,11 @@ func ExportEdit(ctx echo.Context) error {
 	}
 	id := ctx.Formx(`id`).Uint()
 	m := model.NewCollectorExport(ctx)
-	//user := handler.User(ctx)
+	//user := backend.User(ctx)
 	err := m.Get(nil, `id`, id)
 	if err != nil {
-		handler.SendFail(ctx, err.Error())
-		return ctx.Redirect(handler.URLFor(`/collector/export`))
+		common.SendFail(ctx, err.Error())
+		return ctx.Redirect(backend.URLFor(`/collector/export`))
 	}
 	if ctx.IsPost() {
 		err = ctx.MustBind(m.NgingCollectorExport)
@@ -272,8 +272,8 @@ func ExportEdit(ctx echo.Context) error {
 			err = m.Edit(nil, `id`, id)
 		}
 		if err == nil {
-			handler.SendOk(ctx, ctx.T(`修改成功`))
-			return ctx.Redirect(handler.URLFor(`/collector/export`))
+			common.SendOk(ctx, ctx.T(`修改成功`))
+			return ctx.Redirect(backend.URLFor(`/collector/export`))
 		}
 	} else if ctx.IsAjax() {
 		return ExportEditStatus(ctx)
@@ -307,7 +307,7 @@ func ExportEdit(ctx echo.Context) error {
 	ctx.Set(`data`, m)
 	ctx.Set(`childrenPageList`, childrenPageList)
 	setExportFormData(ctx)
-	return ctx.Render(`collector/export_edit`, handler.Err(ctx, err))
+	return ctx.Render(`collector/export_edit`, common.Err(ctx, err))
 }
 
 func ExportEditStatus(ctx echo.Context) error {
@@ -324,15 +324,15 @@ func ExportEditStatus(ctx echo.Context) error {
 func ExportDelete(ctx echo.Context) error {
 	id := ctx.Formx(`id`).Uint()
 	m := model.NewCollectorExport(ctx)
-	//user := handler.User(ctx)
+	//user := backend.User(ctx)
 	err := m.Delete(nil, db.And(
 		db.Cond{`id`: id},
 		//db.Cond{`uid`: user.Id},
 	))
 	if err == nil {
-		handler.SendOk(ctx, ctx.T(`操作成功`))
+		common.SendOk(ctx, ctx.T(`操作成功`))
 	} else {
-		handler.SendFail(ctx, err.Error())
+		common.SendFail(ctx, err.Error())
 	}
-	return ctx.Redirect(handler.URLFor(`/collector/export`))
+	return ctx.Redirect(backend.URLFor(`/collector/export`))
 }

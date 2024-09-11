@@ -27,8 +27,8 @@ import (
 	"github.com/webx-top/com"
 	"github.com/webx-top/db"
 
-	"github.com/admpub/nging/v5/application/library/common"
-	"github.com/admpub/nging/v5/application/library/cron"
+	"github.com/coscms/webcore/library/common"
+	"github.com/coscms/webcore/library/cron"
 
 	"github.com/nging-plugins/collector/application/library/collector/exec"
 	"github.com/nging-plugins/collector/application/library/collector/export"

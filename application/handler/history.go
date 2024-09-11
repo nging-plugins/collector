@@ -25,8 +25,8 @@ import (
 	"github.com/webx-top/db"
 	"github.com/webx-top/echo"
 
-	"github.com/admpub/nging/v5/application/handler"
-	"github.com/admpub/nging/v5/application/library/common"
+	"github.com/coscms/webcore/library/backend"
+	"github.com/coscms/webcore/library/common"
 
 	"github.com/nging-plugins/collector/application/dbschema"
 	"github.com/nging-plugins/collector/application/model"
@@ -50,10 +50,10 @@ func History(c echo.Context) error {
 		}
 		cond.Add(db.Cond{`parent_id`: 0})
 	}
-	_, err := handler.PagingWithLister(c, handler.NewLister(m, nil, func(r db.Result) db.Result {
+	_, err := common.PagingWithLister(c, common.NewLister(m, nil, func(r db.Result) db.Result {
 		return r.OrderBy(`-id`)
 	}, cond))
-	ret := handler.Err(c, err)
+	ret := common.Err(c, err)
 	c.Set(`listData`, m.Objects())
 	var positions []dbschema.NgingCollectorHistory
 	var pageRule *dbschema.NgingCollectorPage
@@ -100,9 +100,9 @@ func HistoryDelete(c echo.Context) error {
 	cond := db.Cond{`id`: id}
 	err := m.Delete(nil, cond)
 	if err != nil {
-		handler.SendFail(c, err.Error())
+		common.SendFail(c, err.Error())
 	} else {
-		handler.SendOk(c, c.T(`操作成功`))
+		common.SendOk(c, c.T(`操作成功`))
 	}
-	return c.Redirect(handler.URLFor(`/collector/history`))
+	return c.Redirect(backend.URLFor(`/collector/history`))
 }
