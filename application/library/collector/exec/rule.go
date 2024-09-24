@@ -47,6 +47,7 @@ import (
 
 	"github.com/coscms/webcore/library/charset"
 	"github.com/coscms/webcore/library/common"
+	"github.com/coscms/webcore/library/filecache"
 	"github.com/coscms/webcore/library/notice"
 
 	"github.com/nging-plugins/collector/application/dbschema"
@@ -108,7 +109,7 @@ func (c *Rule) recordDebugFile(recv *Recv) {
 	if !c.debug {
 		return
 	}
-	common.WriteCache(`collector-debug`, `enterUrl-`+fmt.Sprintf(`%d_%d_%d`, c.RootId, recv.LevelIndex, recv.URLIndex)+`.json`, com.Str2bytes(fomartGoData(recv)))
+	filecache.WriteCache(`collector-debug`, `enterUrl-`+fmt.Sprintf(`%d_%d_%d`, c.RootId, recv.LevelIndex, recv.URLIndex)+`.json`, com.Str2bytes(fomartGoData(recv)))
 }
 
 func (c *Rule) Collect(parentID uint64, parentURL string, recv *Recv,
@@ -371,7 +372,7 @@ func (c *Rule) CollectOne(recv *Recv, urlIndex int,
 		return
 	}
 	//historyMdl.Data = string(encoded)
-	err = common.WriteCache(`colloctor`, urlMD5+`.json`, encoded)
+	err = filecache.WriteCache(`colloctor`, urlMD5+`.json`, encoded)
 	if err != nil {
 		return
 	}

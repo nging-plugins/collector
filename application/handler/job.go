@@ -27,8 +27,8 @@ import (
 	"github.com/webx-top/com"
 	"github.com/webx-top/db"
 
-	"github.com/coscms/webcore/library/common"
 	"github.com/coscms/webcore/library/cron"
+	"github.com/coscms/webcore/library/nerrors"
 
 	"github.com/nging-plugins/collector/application/library/collector/exec"
 	"github.com/nging-plugins/collector/application/library/collector/export"
@@ -85,7 +85,7 @@ func Go(k interface{}, r *exec.Rules, f func(), ctx context.Context) (err error)
 		select {
 		case <-ctx.Done():
 			process.Close(k)
-			log.Warnf(`[collector] %v`, common.ErrContextCanceled)
+			log.Warnf(`[collector] %v`, nerrors.ErrContextCanceled)
 			return
 		default:
 			f()

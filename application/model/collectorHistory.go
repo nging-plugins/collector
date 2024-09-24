@@ -25,6 +25,7 @@ import (
 	"github.com/webx-top/echo"
 
 	"github.com/coscms/webcore/library/common"
+	"github.com/coscms/webcore/library/filecache"
 
 	"github.com/nging-plugins/collector/application/dbschema"
 )
@@ -83,7 +84,7 @@ START:
 }
 
 func (this *CollectorHistory) delete(row *dbschema.NgingCollectorHistory) error {
-	err := common.RemoveCache(`colloctor`, row.UrlMd5+`.json`)
+	err := filecache.RemoveCache(`colloctor`, row.UrlMd5+`.json`)
 	if err != nil {
 		log.Error(err)
 	}

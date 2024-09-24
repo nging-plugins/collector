@@ -27,6 +27,7 @@ import (
 
 	"github.com/coscms/webcore/library/backend"
 	"github.com/coscms/webcore/library/common"
+	"github.com/coscms/webcore/library/filecache"
 
 	"github.com/nging-plugins/collector/application/dbschema"
 	"github.com/nging-plugins/collector/application/model"
@@ -86,7 +87,7 @@ func HistoryView(c echo.Context) error {
 	if !com.IsAlphaNumericUnderscore(ident) {
 		return c.JSON(data.SetInfo(c.T(`无效参数`), 0))
 	}
-	b, err := common.ReadCache(`colloctor`, ident+`.json`)
+	b, err := filecache.ReadCache(`colloctor`, ident+`.json`)
 	if err != nil {
 		return c.JSON(data.SetError(err))
 	}
