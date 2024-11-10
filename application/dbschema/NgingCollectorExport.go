@@ -219,10 +219,14 @@ func (a *NgingCollectorExport) Struct_() string {
 }
 
 func (a *NgingCollectorExport) Name_() string {
-	if a.base.Namer() != nil {
-		return WithPrefix(a.base.Namer()(a))
+	b := a
+	if b == nil {
+		b = &NgingCollectorExport{}
 	}
-	return WithPrefix(factory.TableNamerGet(a.Short_())(a))
+	if b.base.Namer() != nil {
+		return WithPrefix(b.base.Namer()(b))
+	}
+	return WithPrefix(factory.TableNamerGet(b.Short_())(b))
 }
 
 func (a *NgingCollectorExport) CPAFrom(source factory.Model) factory.Model {
@@ -480,7 +484,7 @@ func (a *NgingCollectorExport) UpdateFields(mw func(db.Result) db.Result, kvset 
 	}
 	m := *a
 	m.FromRow(kvset)
-	var editColumns []string
+	editColumns := make([]string, 0, len(kvset))
 	for column := range kvset {
 		editColumns = append(editColumns, column)
 	}
@@ -510,7 +514,7 @@ func (a *NgingCollectorExport) UpdatexFields(mw func(db.Result) db.Result, kvset
 	}
 	m := *a
 	m.FromRow(kvset)
-	var editColumns []string
+	editColumns := make([]string, 0, len(kvset))
 	for column := range kvset {
 		editColumns = append(editColumns, column)
 	}
@@ -685,6 +689,9 @@ func (a *NgingCollectorExport) AsMap(onlyFields ...string) param.Store {
 
 func (a *NgingCollectorExport) FromRow(row map[string]interface{}) {
 	for key, value := range row {
+		if _, ok := value.(db.RawValue); ok {
+			continue
+		}
 		switch key {
 		case "id":
 			a.Id = param.AsUint(value)
@@ -711,6 +718,85 @@ func (a *NgingCollectorExport) FromRow(row map[string]interface{}) {
 		case "disabled":
 			a.Disabled = param.AsString(value)
 		}
+	}
+}
+
+func (a *NgingCollectorExport) GetField(field string) interface{} {
+	switch field {
+	case "Id":
+		return a.Id
+	case "PageRoot":
+		return a.PageRoot
+	case "PageId":
+		return a.PageId
+	case "GroupId":
+		return a.GroupId
+	case "Mapping":
+		return a.Mapping
+	case "Dest":
+		return a.Dest
+	case "DestType":
+		return a.DestType
+	case "Name":
+		return a.Name
+	case "Description":
+		return a.Description
+	case "Created":
+		return a.Created
+	case "Exported":
+		return a.Exported
+	case "Disabled":
+		return a.Disabled
+	default:
+		return nil
+	}
+}
+
+func (a *NgingCollectorExport) GetAllFieldNames() []string {
+	return []string{
+		"Id",
+		"PageRoot",
+		"PageId",
+		"GroupId",
+		"Mapping",
+		"Dest",
+		"DestType",
+		"Name",
+		"Description",
+		"Created",
+		"Exported",
+		"Disabled",
+	}
+}
+
+func (a *NgingCollectorExport) HasField(field string) bool {
+	switch field {
+	case "Id":
+		return true
+	case "PageRoot":
+		return true
+	case "PageId":
+		return true
+	case "GroupId":
+		return true
+	case "Mapping":
+		return true
+	case "Dest":
+		return true
+	case "DestType":
+		return true
+	case "Name":
+		return true
+	case "Description":
+		return true
+	case "Created":
+		return true
+	case "Exported":
+		return true
+	case "Disabled":
+		return true
+	default:
+		return false
 	}
 }
 
@@ -811,17 +897,19 @@ func (a *NgingCollectorExport) AsRow(onlyFields ...string) param.Store {
 }
 
 func (a *NgingCollectorExport) ListPage(cond *db.Compounds, sorts ...interface{}) error {
-	_, err := pagination.NewLister(a, nil, func(r db.Result) db.Result {
-		return r.OrderBy(sorts...)
-	}, cond.And()).Paging(a.Context())
-	return err
+	return pagination.ListPage(a, cond, sorts...)
 }
 
 func (a *NgingCollectorExport) ListPageAs(recv interface{}, cond *db.Compounds, sorts ...interface{}) error {
-	_, err := pagination.NewLister(a, recv, func(r db.Result) db.Result {
-		return r.OrderBy(sorts...)
-	}, cond.And()).Paging(a.Context())
-	return err
+	return pagination.ListPageAs(a, recv, cond, sorts...)
+}
+
+func (a *NgingCollectorExport) ListPageByOffset(cond *db.Compounds, sorts ...interface{}) error {
+	return pagination.ListPageByOffset(a, cond, sorts...)
+}
+
+func (a *NgingCollectorExport) ListPageByOffsetAs(recv interface{}, cond *db.Compounds, sorts ...interface{}) error {
+	return pagination.ListPageByOffsetAs(a, recv, cond, sorts...)
 }
 
 func (a *NgingCollectorExport) BatchValidate(kvset map[string]interface{}) error {

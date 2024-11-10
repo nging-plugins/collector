@@ -213,10 +213,14 @@ func (a *NgingCollectorGroup) Struct_() string {
 }
 
 func (a *NgingCollectorGroup) Name_() string {
-	if a.base.Namer() != nil {
-		return WithPrefix(a.base.Namer()(a))
+	b := a
+	if b == nil {
+		b = &NgingCollectorGroup{}
 	}
-	return WithPrefix(factory.TableNamerGet(a.Short_())(a))
+	if b.base.Namer() != nil {
+		return WithPrefix(b.base.Namer()(b))
+	}
+	return WithPrefix(factory.TableNamerGet(b.Short_())(b))
 }
 
 func (a *NgingCollectorGroup) CPAFrom(source factory.Model) factory.Model {
@@ -454,7 +458,7 @@ func (a *NgingCollectorGroup) UpdateFields(mw func(db.Result) db.Result, kvset m
 	}
 	m := *a
 	m.FromRow(kvset)
-	var editColumns []string
+	editColumns := make([]string, 0, len(kvset))
 	for column := range kvset {
 		editColumns = append(editColumns, column)
 	}
@@ -479,7 +483,7 @@ func (a *NgingCollectorGroup) UpdatexFields(mw func(db.Result) db.Result, kvset 
 	}
 	m := *a
 	m.FromRow(kvset)
-	var editColumns []string
+	editColumns := make([]string, 0, len(kvset))
 	for column := range kvset {
 		editColumns = append(editColumns, column)
 	}
@@ -624,6 +628,9 @@ func (a *NgingCollectorGroup) AsMap(onlyFields ...string) param.Store {
 
 func (a *NgingCollectorGroup) FromRow(row map[string]interface{}) {
 	for key, value := range row {
+		if _, ok := value.(db.RawValue); ok {
+			continue
+		}
 		switch key {
 		case "id":
 			a.Id = param.AsUint(value)
@@ -638,6 +645,55 @@ func (a *NgingCollectorGroup) FromRow(row map[string]interface{}) {
 		case "created":
 			a.Created = param.AsUint(value)
 		}
+	}
+}
+
+func (a *NgingCollectorGroup) GetField(field string) interface{} {
+	switch field {
+	case "Id":
+		return a.Id
+	case "Uid":
+		return a.Uid
+	case "Name":
+		return a.Name
+	case "Type":
+		return a.Type
+	case "Description":
+		return a.Description
+	case "Created":
+		return a.Created
+	default:
+		return nil
+	}
+}
+
+func (a *NgingCollectorGroup) GetAllFieldNames() []string {
+	return []string{
+		"Id",
+		"Uid",
+		"Name",
+		"Type",
+		"Description",
+		"Created",
+	}
+}
+
+func (a *NgingCollectorGroup) HasField(field string) bool {
+	switch field {
+	case "Id":
+		return true
+	case "Uid":
+		return true
+	case "Name":
+		return true
+	case "Type":
+		return true
+	case "Description":
+		return true
+	case "Created":
+		return true
+	default:
+		return false
 	}
 }
 
@@ -708,17 +764,19 @@ func (a *NgingCollectorGroup) AsRow(onlyFields ...string) param.Store {
 }
 
 func (a *NgingCollectorGroup) ListPage(cond *db.Compounds, sorts ...interface{}) error {
-	_, err := pagination.NewLister(a, nil, func(r db.Result) db.Result {
-		return r.OrderBy(sorts...)
-	}, cond.And()).Paging(a.Context())
-	return err
+	return pagination.ListPage(a, cond, sorts...)
 }
 
 func (a *NgingCollectorGroup) ListPageAs(recv interface{}, cond *db.Compounds, sorts ...interface{}) error {
-	_, err := pagination.NewLister(a, recv, func(r db.Result) db.Result {
-		return r.OrderBy(sorts...)
-	}, cond.And()).Paging(a.Context())
-	return err
+	return pagination.ListPageAs(a, recv, cond, sorts...)
+}
+
+func (a *NgingCollectorGroup) ListPageByOffset(cond *db.Compounds, sorts ...interface{}) error {
+	return pagination.ListPageByOffset(a, cond, sorts...)
+}
+
+func (a *NgingCollectorGroup) ListPageByOffsetAs(recv interface{}, cond *db.Compounds, sorts ...interface{}) error {
+	return pagination.ListPageByOffsetAs(a, recv, cond, sorts...)
 }
 
 func (a *NgingCollectorGroup) BatchValidate(kvset map[string]interface{}) error {

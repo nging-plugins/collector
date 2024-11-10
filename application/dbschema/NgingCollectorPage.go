@@ -229,10 +229,14 @@ func (a *NgingCollectorPage) Struct_() string {
 }
 
 func (a *NgingCollectorPage) Name_() string {
-	if a.base.Namer() != nil {
-		return WithPrefix(a.base.Namer()(a))
+	b := a
+	if b == nil {
+		b = &NgingCollectorPage{}
 	}
-	return WithPrefix(factory.TableNamerGet(a.Short_())(a))
+	if b.base.Namer() != nil {
+		return WithPrefix(b.base.Namer()(b))
+	}
+	return WithPrefix(factory.TableNamerGet(b.Short_())(b))
 }
 
 func (a *NgingCollectorPage) CPAFrom(source factory.Model) factory.Model {
@@ -530,7 +534,7 @@ func (a *NgingCollectorPage) UpdateFields(mw func(db.Result) db.Result, kvset ma
 	}
 	m := *a
 	m.FromRow(kvset)
-	var editColumns []string
+	editColumns := make([]string, 0, len(kvset))
 	for column := range kvset {
 		editColumns = append(editColumns, column)
 	}
@@ -570,7 +574,7 @@ func (a *NgingCollectorPage) UpdatexFields(mw func(db.Result) db.Result, kvset m
 	}
 	m := *a
 	m.FromRow(kvset)
-	var editColumns []string
+	editColumns := make([]string, 0, len(kvset))
 	for column := range kvset {
 		editColumns = append(editColumns, column)
 	}
@@ -797,6 +801,9 @@ func (a *NgingCollectorPage) AsMap(onlyFields ...string) param.Store {
 
 func (a *NgingCollectorPage) FromRow(row map[string]interface{}) {
 	for key, value := range row {
+		if _, ok := value.(db.RawValue); ok {
+			continue
+		}
 		switch key {
 		case "id":
 			a.Id = param.AsUint(value)
@@ -843,6 +850,135 @@ func (a *NgingCollectorPage) FromRow(row map[string]interface{}) {
 		case "header":
 			a.Header = param.AsString(value)
 		}
+	}
+}
+
+func (a *NgingCollectorPage) GetField(field string) interface{} {
+	switch field {
+	case "Id":
+		return a.Id
+	case "ParentId":
+		return a.ParentId
+	case "RootId":
+		return a.RootId
+	case "HasChild":
+		return a.HasChild
+	case "Uid":
+		return a.Uid
+	case "GroupId":
+		return a.GroupId
+	case "Name":
+		return a.Name
+	case "Description":
+		return a.Description
+	case "EnterUrl":
+		return a.EnterUrl
+	case "Sort":
+		return a.Sort
+	case "Created":
+		return a.Created
+	case "Browser":
+		return a.Browser
+	case "Type":
+		return a.Type
+	case "ScopeRule":
+		return a.ScopeRule
+	case "DuplicateRule":
+		return a.DuplicateRule
+	case "ContentType":
+		return a.ContentType
+	case "Charset":
+		return a.Charset
+	case "Timeout":
+		return a.Timeout
+	case "Waits":
+		return a.Waits
+	case "Proxy":
+		return a.Proxy
+	case "Cookie":
+		return a.Cookie
+	case "Header":
+		return a.Header
+	default:
+		return nil
+	}
+}
+
+func (a *NgingCollectorPage) GetAllFieldNames() []string {
+	return []string{
+		"Id",
+		"ParentId",
+		"RootId",
+		"HasChild",
+		"Uid",
+		"GroupId",
+		"Name",
+		"Description",
+		"EnterUrl",
+		"Sort",
+		"Created",
+		"Browser",
+		"Type",
+		"ScopeRule",
+		"DuplicateRule",
+		"ContentType",
+		"Charset",
+		"Timeout",
+		"Waits",
+		"Proxy",
+		"Cookie",
+		"Header",
+	}
+}
+
+func (a *NgingCollectorPage) HasField(field string) bool {
+	switch field {
+	case "Id":
+		return true
+	case "ParentId":
+		return true
+	case "RootId":
+		return true
+	case "HasChild":
+		return true
+	case "Uid":
+		return true
+	case "GroupId":
+		return true
+	case "Name":
+		return true
+	case "Description":
+		return true
+	case "EnterUrl":
+		return true
+	case "Sort":
+		return true
+	case "Created":
+		return true
+	case "Browser":
+		return true
+	case "Type":
+		return true
+	case "ScopeRule":
+		return true
+	case "DuplicateRule":
+		return true
+	case "ContentType":
+		return true
+	case "Charset":
+		return true
+	case "Timeout":
+		return true
+	case "Waits":
+		return true
+	case "Proxy":
+		return true
+	case "Cookie":
+		return true
+	case "Header":
+		return true
+	default:
+		return false
 	}
 }
 
@@ -993,17 +1129,19 @@ func (a *NgingCollectorPage) AsRow(onlyFields ...string) param.Store {
 }
 
 func (a *NgingCollectorPage) ListPage(cond *db.Compounds, sorts ...interface{}) error {
-	_, err := pagination.NewLister(a, nil, func(r db.Result) db.Result {
-		return r.OrderBy(sorts...)
-	}, cond.And()).Paging(a.Context())
-	return err
+	return pagination.ListPage(a, cond, sorts...)
 }
 
 func (a *NgingCollectorPage) ListPageAs(recv interface{}, cond *db.Compounds, sorts ...interface{}) error {
-	_, err := pagination.NewLister(a, recv, func(r db.Result) db.Result {
-		return r.OrderBy(sorts...)
-	}, cond.And()).Paging(a.Context())
-	return err
+	return pagination.ListPageAs(a, recv, cond, sorts...)
+}
+
+func (a *NgingCollectorPage) ListPageByOffset(cond *db.Compounds, sorts ...interface{}) error {
+	return pagination.ListPageByOffset(a, cond, sorts...)
+}
+
+func (a *NgingCollectorPage) ListPageByOffsetAs(recv interface{}, cond *db.Compounds, sorts ...interface{}) error {
+	return pagination.ListPageByOffsetAs(a, recv, cond, sorts...)
 }
 
 func (a *NgingCollectorPage) BatchValidate(kvset map[string]interface{}) error {

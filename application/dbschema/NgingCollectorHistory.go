@@ -221,10 +221,14 @@ func (a *NgingCollectorHistory) Struct_() string {
 }
 
 func (a *NgingCollectorHistory) Name_() string {
-	if a.base.Namer() != nil {
-		return WithPrefix(a.base.Namer()(a))
+	b := a
+	if b == nil {
+		b = &NgingCollectorHistory{}
 	}
-	return WithPrefix(factory.TableNamerGet(a.Short_())(a))
+	if b.base.Namer() != nil {
+		return WithPrefix(b.base.Namer()(b))
+	}
+	return WithPrefix(factory.TableNamerGet(b.Short_())(b))
 }
 
 func (a *NgingCollectorHistory) CPAFrom(source factory.Model) factory.Model {
@@ -462,7 +466,7 @@ func (a *NgingCollectorHistory) UpdateFields(mw func(db.Result) db.Result, kvset
 	}
 	m := *a
 	m.FromRow(kvset)
-	var editColumns []string
+	editColumns := make([]string, 0, len(kvset))
 	for column := range kvset {
 		editColumns = append(editColumns, column)
 	}
@@ -487,7 +491,7 @@ func (a *NgingCollectorHistory) UpdatexFields(mw func(db.Result) db.Result, kvse
 	}
 	m := *a
 	m.FromRow(kvset)
-	var editColumns []string
+	editColumns := make([]string, 0, len(kvset))
 	for column := range kvset {
 		editColumns = append(editColumns, column)
 	}
@@ -664,6 +668,9 @@ func (a *NgingCollectorHistory) AsMap(onlyFields ...string) param.Store {
 
 func (a *NgingCollectorHistory) FromRow(row map[string]interface{}) {
 	for key, value := range row {
+		if _, ok := value.(db.RawValue); ok {
+			continue
+		}
 		switch key {
 		case "id":
 			a.Id = param.AsUint64(value)
@@ -694,6 +701,95 @@ func (a *NgingCollectorHistory) FromRow(row map[string]interface{}) {
 		case "exported":
 			a.Exported = param.AsUint(value)
 		}
+	}
+}
+
+func (a *NgingCollectorHistory) GetField(field string) interface{} {
+	switch field {
+	case "Id":
+		return a.Id
+	case "ParentId":
+		return a.ParentId
+	case "PageId":
+		return a.PageId
+	case "PageParentId":
+		return a.PageParentId
+	case "PageRootId":
+		return a.PageRootId
+	case "HasChild":
+		return a.HasChild
+	case "Url":
+		return a.Url
+	case "UrlMd5":
+		return a.UrlMd5
+	case "Title":
+		return a.Title
+	case "Content":
+		return a.Content
+	case "RuleMd5":
+		return a.RuleMd5
+	case "Data":
+		return a.Data
+	case "Created":
+		return a.Created
+	case "Exported":
+		return a.Exported
+	default:
+		return nil
+	}
+}
+
+func (a *NgingCollectorHistory) GetAllFieldNames() []string {
+	return []string{
+		"Id",
+		"ParentId",
+		"PageId",
+		"PageParentId",
+		"PageRootId",
+		"HasChild",
+		"Url",
+		"UrlMd5",
+		"Title",
+		"Content",
+		"RuleMd5",
+		"Data",
+		"Created",
+		"Exported",
+	}
+}
+
+func (a *NgingCollectorHistory) HasField(field string) bool {
+	switch field {
+	case "Id":
+		return true
+	case "ParentId":
+		return true
+	case "PageId":
+		return true
+	case "PageParentId":
+		return true
+	case "PageRootId":
+		return true
+	case "HasChild":
+		return true
+	case "Url":
+		return true
+	case "UrlMd5":
+		return true
+	case "Title":
+		return true
+	case "Content":
+		return true
+	case "RuleMd5":
+		return true
+	case "Data":
+		return true
+	case "Created":
+		return true
+	case "Exported":
+		return true
+	default:
+		return false
 	}
 }
 
@@ -804,17 +900,19 @@ func (a *NgingCollectorHistory) AsRow(onlyFields ...string) param.Store {
 }
 
 func (a *NgingCollectorHistory) ListPage(cond *db.Compounds, sorts ...interface{}) error {
-	_, err := pagination.NewLister(a, nil, func(r db.Result) db.Result {
-		return r.OrderBy(sorts...)
-	}, cond.And()).Paging(a.Context())
-	return err
+	return pagination.ListPage(a, cond, sorts...)
 }
 
 func (a *NgingCollectorHistory) ListPageAs(recv interface{}, cond *db.Compounds, sorts ...interface{}) error {
-	_, err := pagination.NewLister(a, recv, func(r db.Result) db.Result {
-		return r.OrderBy(sorts...)
-	}, cond.And()).Paging(a.Context())
-	return err
+	return pagination.ListPageAs(a, recv, cond, sorts...)
+}
+
+func (a *NgingCollectorHistory) ListPageByOffset(cond *db.Compounds, sorts ...interface{}) error {
+	return pagination.ListPageByOffset(a, cond, sorts...)
+}
+
+func (a *NgingCollectorHistory) ListPageByOffsetAs(recv interface{}, cond *db.Compounds, sorts ...interface{}) error {
+	return pagination.ListPageByOffsetAs(a, recv, cond, sorts...)
 }
 
 func (a *NgingCollectorHistory) BatchValidate(kvset map[string]interface{}) error {
