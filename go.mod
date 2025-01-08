@@ -18,7 +18,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20240602235142-49d0e97b7881
 	github.com/chromedp/chromedp v0.9.5
 	github.com/coscms/webcore v0.6.39
-	github.com/nging-plugins/dbmanager v1.6.4
+	github.com/nging-plugins/dbmanager v1.8.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tebeka/selenium v0.9.9
 	github.com/webx-top/com v1.3.20
@@ -97,7 +97,6 @@ require (
 	github.com/fcjr/aia-transport-go v1.2.2 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/friendsofgo/errors v0.9.2 // indirect
-	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
