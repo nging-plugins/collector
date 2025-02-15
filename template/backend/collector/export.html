@@ -40,14 +40,12 @@
 							<th><strong>{{"目标值"|$.T}}</strong></th>
 							<th><strong>{{"创建时间"|$.T}}</strong></th>
 							<th><strong>{{"导出时间"|$.T}}</strong></th>
-							<th style="width:80px;">
-								<strong>{{"启用状态"|$.T}}</strong>
-							</th>
-							<th style="width:130px" class="text-center"><strong>{{"操作"|$.T}}</strong></th>
+							<th style="width:80px;"><strong>{{"启用状态"|$.T}}</strong></th>
+							<th style="width:140px" class="text-center"><strong>{{"操作"|$.T}}</strong></th>
 						</tr>
 					</thead>
 					<tbody class="no-border-y">
-                        {{range $k,$v := $.Stored.listData}}
+                        {{- range $k,$v := $.Stored.listData -}}
 						<tr>
 							<td>{{$v.Id}}</td>
 							<td>{{$v.PageId}}</td>
@@ -57,7 +55,7 @@
 							<td>{{if gt $v.Exported 0}}{{(Date $v.Exported).Format "2006-01-02 15:04:05"}}{{end}}</td>
 							<td>
 								<div class="checkbox checkbox-success no-margin-y">
-									<input id="checkbox-{{$k}}" class="styled switch-disabled" type="checkbox" data-id="{{$v.Id}}"{{if eq $v.Disabled "N"}} checked="checked"{{end}} value="N" /><label for="checkbox-{{$k}}">{{"启用"|$.T}}</label>
+									<input id="checkbox-{{$k}}" class="styled switch-disabled" type="checkbox" data-id="{{$v.Id}}"{{if eq $v.Disabled `N`}} checked="checked"{{end}} value="N" /><label for="checkbox-{{$k}}">{{"启用"|$.T}}</label>
 								</div>
 							</td>
 							<td class="text-center">
@@ -67,7 +65,7 @@
 							<a class="label label-danger" href="{{BackendURL}}/collector/export_delete?id={{$v.Id}}" onclick="return confirm('{{`真的要删除吗？`|$.T}}');" data-toggle="tooltip" title="{{`删除`|$.T}}"><i class="fa fa-times"></i></a>
 							</td>
 						</tr>
-                        {{end}}
+                        {{- end -}}
 					</tbody>
 				</table>		
 				</div>
