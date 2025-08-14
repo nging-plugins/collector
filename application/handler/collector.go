@@ -456,7 +456,7 @@ func RuleCollect(c echo.Context) error {
 		}
 		mockCtx := defaults.NewMockContext()
 		mockCtx.SetTransaction(c.Transaction())
-		mockCtx.SetTranslator(c.Object().Translator)
+		mockCtx.SetTranslator(c.Translator())
 		err = Go(m.Id, collected, func() {
 			var noticeSender sender.Notice
 			progress := notice.NewProgress()
