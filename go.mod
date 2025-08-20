@@ -17,13 +17,13 @@ require (
 	github.com/admpub/regexp2 v1.1.8
 	github.com/chromedp/cdproto v0.0.0-20240602235142-49d0e97b7881
 	github.com/chromedp/chromedp v0.9.5
-	github.com/coscms/webcore v0.9.40
+	github.com/coscms/webcore v0.12.4-0.20250820064116-4d512abc4115
 	github.com/nging-plugins/dbmanager v1.8.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tebeka/selenium v0.9.9
-	github.com/webx-top/com v1.3.31
+	github.com/webx-top/com v1.4.0
 	github.com/webx-top/db v1.28.6
-	github.com/webx-top/echo v1.16.17
+	github.com/webx-top/echo v1.21.0
 )
 
 require (
@@ -55,7 +55,7 @@ require (
 	github.com/admpub/go-utility v0.0.1 // indirect
 	github.com/admpub/godotenv v1.4.3 // indirect
 	github.com/admpub/humanize v0.0.0-20190501023926-5f826e92c8ca // indirect
-	github.com/admpub/i18n v0.4.6 // indirect
+	github.com/admpub/i18n v0.5.2 // indirect
 	github.com/admpub/identicon v1.0.2 // indirect
 	github.com/admpub/imageproxy v0.10.1 // indirect
 	github.com/admpub/imaging v1.6.3 // indirect
@@ -77,8 +77,9 @@ require (
 	github.com/admpub/service v0.0.8 // indirect
 	github.com/admpub/sessions v0.3.0 // indirect
 	github.com/admpub/sonyflake v0.0.1 // indirect
+	github.com/admpub/sse v0.0.0-20160126180136-ee05b128a739 // indirect
 	github.com/admpub/tail v1.1.1 // indirect
-	github.com/admpub/timeago v1.2.2 // indirect
+	github.com/admpub/timeago v1.3.0 // indirect
 	github.com/admpub/xencoding v0.0.3 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect

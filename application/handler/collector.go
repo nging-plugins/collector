@@ -28,6 +28,7 @@ import (
 
 	"github.com/coscms/webcore/library/backend"
 	"github.com/coscms/webcore/library/common"
+	"github.com/coscms/webcore/library/config"
 	"github.com/coscms/webcore/library/notice"
 
 	"github.com/nging-plugins/collector/application/dbschema"
@@ -456,7 +457,7 @@ func RuleCollect(c echo.Context) error {
 		}
 		mockCtx := defaults.NewMockContext()
 		mockCtx.SetTransaction(c.Transaction())
-		mockCtx.SetTranslator(c.Translator())
+		mockCtx.SetTranslator(config.FromFile().GetTranslator(c))
 		err = Go(m.Id, collected, func() {
 			var noticeSender sender.Notice
 			progress := notice.NewProgress()
