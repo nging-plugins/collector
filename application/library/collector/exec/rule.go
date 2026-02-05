@@ -492,7 +492,7 @@ func (c *Rule) execPipe(recv *Recv, pageURL string, content []byte, fetch Fether
 				c.Charset = `utf-8`
 			}
 			// 字符集转码
-			if strings.ToLower(c.Charset) != `utf-8` {
+			if !strings.EqualFold(c.Charset, `utf-8`) {
 				body, err = charset.Convert(c.Charset, `utf-8`, body)
 				if err != nil {
 					return
