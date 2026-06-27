@@ -44,18 +44,18 @@
 <div class="row">
 	<div class="col-md-12">
 		<div class="block-flat no-padding">
-			<div class="header">							
+			<div class="header">
 				<h3>{{"历史记录"|$.T}}</h3>
 			</div>
 			<div class="content">
-				<div class="table-responsive">
+				<div class="table-responsive" data-pattern="priority-columns">
 				<table class="table no-border hover">
 					<thead class="no-border">
 						<tr>
-							<th style="width:70px"><strong>ID</strong></th>
-							<th style="width:70px"><strong>{{"页面ID"|$.T}}</strong></th>
+							<th data-priority="1" style="width:70px"><strong>ID</strong></th>
+							<th data-priority="1" style="width:70px"><strong>{{"页面ID"|$.T}}</strong></th>
 							<th><strong>{{"页面"|$.T}}</strong></th>
-							<th style="width:180px"><strong>{{"时间"|$.T}}</strong></th>
+							<th data-priority="3" style="width:180px"><strong>{{"时间"|$.T}}</strong></th>
 							<th style="width:120px" class="text-center"><strong>{{"操作"|$.T}}</strong></th>
 						</tr>
 					</thead>
@@ -65,7 +65,7 @@
 							<td>{{$v.Id}}</td>
 							<td>{{$v.PageId}}</td>
 							<td>
-                                {{- "标题"|$.T -}}: 
+                                {{- "标题"|$.T -}}:
                                 {{- if $v.Title -}}
                                 {{- $v.Title -}}
                                 {{- else }}
@@ -74,21 +74,21 @@
                                 {{- "网址"|$.T -}}: <a href="{{$v.Url}}" target="_blank" data-toggle="tooltip" title="{{`打开网页`|$.T}}" rel="noopener noreferrer">{{$v.Url}}</a>
                             </td>
 							<td>{{"创建"|$.T}}: {{(Date $v.Created).Format "2006-01-02 15:04:05"}}<br />{{"导出"|$.T}}: {{if gt $v.Exported 0}}{{(Date $v.Exported).Format "2006-01-02 15:04:05"}}{{else}}N/A{{end}}</td>
-							<td class="text-center">
+							<td class="text-center label-group">
                             <a class="label label-primary" href="javascript:;" onclick="showContentModal('{{$v.UrlMd5}}')" data-toggle="tooltip" title="{{`查看采集内容`|$.T}}"><i class="fa fa-eye"></i></a>
                             {{if eq $v.HasChild "Y"}}
                             <a class="label label-success" href="{{BackendURL}}/collector/history?parentId={{$v.Id}}" data-toggle="tooltip" title="{{`查看下级页面`|$.T}}"><i class="fa fa-hand-o-down"></i></a>
-                            {{end}} 
+                            {{end}}
 							<a class="label label-danger" href="{{BackendURL}}/collector/history_delete?id={{$v.Id}}" onclick="return confirm('{{`真的要删除吗？`|$.T}}');" data-toggle="tooltip" title="{{`删除`|$.T}}"><i class="fa fa-times"></i></a>
 							</td>
 						</tr>
                         {{end}}
 					</tbody>
-				</table>		
+				</table>
 				</div>
 				{{$.Stored.pagination.Render}}
 			</div>
-		</div>				
+		</div>
 	</div>
 </div>
 {{/Block}}
